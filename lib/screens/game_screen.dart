@@ -22,6 +22,7 @@ class _GameScreenState extends State<GameScreen>
   List<int> _bits = [];
   bool _solved = false;
   bool _loaded = false;
+  double _flashOpacity = 0.0;
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnim;
@@ -77,8 +78,14 @@ class _GameScreenState extends State<GameScreen>
     setState(() {
       _bits = newBits;
       _solved = correct;
+      if (correct) _flashOpacity = 1.0;
     });
-    if (correct) _pulseController.repeat(reverse: true);
+    if (correct) {
+      _pulseController.repeat(reverse: true);
+      Future.delayed(const Duration(milliseconds: 120), () {
+        if (mounted) setState(() => _flashOpacity = 0.0);
+      });
+    }
   }
 
   void _next() {
@@ -120,29 +127,43 @@ class _GameScreenState extends State<GameScreen>
           child: Container(height: 1, color: _muteGreen),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-            _hud(tier, score),
-            const Spacer(),
-            _targetDisplay(),
-            const SizedBox(height: 44),
-            BitRow(bits: _bits, onToggle: _toggleBit, enabled: !_solved),
-            const SizedBox(height: 28),
-            Text(
-              '= $currentValue',
-              style: TextStyle(
-                fontSize: 32,
-                color: _solved ? _green : _dimGreen,
-              ),
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              children: [
+                const SizedBox(height: 16),
+                _hud(tier, score),
+                const Spacer(),
+                _targetDisplay(),
+                const SizedBox(height: 44),
+                BitRow(
+                  bits: _bits,
+                  onToggle: _toggleBit,
+                  enabled: !_solved,
+                  glowing: _solved,
+                ),
+                const SizedBox(height: 28),
+                Text(
+                  '= $currentValue',
+                  style: TextStyle(
+                    fontSize: 32,
+                    color: _solved ? _green : _dimGreen,
+                  ),
+                ),
+                const SizedBox(height: 44),
+                _feedback(),
+                const Spacer(),
+              ],
             ),
-            const SizedBox(height: 44),
-            _feedback(),
-            const Spacer(),
-          ],
-        ),
+          ),
+          AnimatedOpacity(
+            opacity: _flashOpacity,
+            duration: const Duration(milliseconds: 60),
+            child: Container(color: const Color(0x2200FF41)),
+          ),
+        ],
       ),
     );
   }
@@ -164,10 +185,12 @@ class _GameScreenState extends State<GameScreen>
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(label,
-            style: const TextStyle(fontSize: 9, color: _dimGreen, letterSpacing: 2)),
+            style: const TextStyle(
+                fontSize: 9, color: _dimGreen, letterSpacing: 2)),
         const SizedBox(height: 2),
         Text(value,
-            style: const TextStyle(fontSize: 14, color: _green, letterSpacing: 1)),
+            style: const TextStyle(
+                fontSize: 14, color: _green, letterSpacing: 1)),
       ],
     );
   }
@@ -203,7 +226,8 @@ class _GameScreenState extends State<GameScreen>
             opacity: _pulseAnim,
             child: const Text(
               'CORRECT',
-              style: TextStyle(fontSize: 26, color: _green, letterSpacing: 8),
+              style:
+                  TextStyle(fontSize: 26, color: _green, letterSpacing: 8),
             ),
           ),
           const SizedBox(height: 24),
@@ -215,7 +239,8 @@ class _GameScreenState extends State<GameScreen>
               decoration: BoxDecoration(border: Border.all(color: _green)),
               child: const Text(
                 'NEXT  →',
-                style: TextStyle(fontSize: 15, color: _green, letterSpacing: 5),
+                style:
+                    TextStyle(fontSize: 15, color: _green, letterSpacing: 5),
               ),
             ),
           ),

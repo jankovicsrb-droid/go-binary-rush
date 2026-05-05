@@ -5,12 +5,14 @@ class BitRow extends StatelessWidget {
   final List<int> bits;
   final void Function(int index) onToggle;
   final bool enabled;
+  final bool glowing;
 
   const BitRow({
     super.key,
     required this.bits,
     required this.onToggle,
     this.enabled = true,
+    this.glowing = false,
   });
 
   static const _supers = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷'];
@@ -27,6 +29,7 @@ class BitRow extends StatelessWidget {
             (i) => BitTile(
               value: bits[i],
               onTap: enabled ? () => onToggle(i) : () {},
+              glowing: glowing,
             ),
           ),
         ),

@@ -8,8 +8,14 @@ const Color _inactiveText = Color(0xFF2E5A2E);
 class BitTile extends StatelessWidget {
   final int value;
   final VoidCallback onTap;
+  final bool glowing;
 
-  const BitTile({super.key, required this.value, required this.onTap});
+  const BitTile({
+    super.key,
+    required this.value,
+    required this.onTap,
+    this.glowing = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +34,15 @@ class BitTile extends StatelessWidget {
             color: on ? _active : _inactiveBorder,
             width: on ? 2 : 1,
           ),
+          boxShadow: (on && glowing)
+              ? [
+                  BoxShadow(
+                    color: const Color(0xAA00FF41),
+                    blurRadius: 16,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           value.toString(),
