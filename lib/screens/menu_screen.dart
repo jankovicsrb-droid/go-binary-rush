@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'addition_screen.dart';
 import 'game_screen.dart';
 import 'reverse_screen.dart';
 
@@ -54,11 +55,14 @@ class MenuScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              const _ModeItem(
+              _ModeItem(
                 index: 3,
                 name: 'ADDITION',
                 subtitle: 'row_a + row_b = target',
-                locked: true,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdditionScreen()),
+                ),
               ),
               const SizedBox(height: 20),
               const _ModeItem(

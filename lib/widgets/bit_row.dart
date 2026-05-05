@@ -6,6 +6,7 @@ class BitRow extends StatelessWidget {
   final void Function(int index) onToggle;
   final bool enabled;
   final bool glowing;
+  final bool showLabels;
 
   const BitRow({
     super.key,
@@ -13,6 +14,7 @@ class BitRow extends StatelessWidget {
     required this.onToggle,
     this.enabled = true,
     this.glowing = false,
+    this.showLabels = true,
   });
 
   static const _supers = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷'];
@@ -47,33 +49,35 @@ class BitRow extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(n, (i) {
-            final int power = n - 1 - i;
-            return SizedBox(
-              width: colWidth,
-              child: Column(
-                children: [
-                  Text(
-                    '${1 << power}',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontSize: labelSize, color: const Color(0xFF3A6A3A)),
-                  ),
-                  Text(
-                    '2${_supers[power]}',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontSize: exponentSize,
-                        color: const Color(0xFF2A5A2A)),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ),
+        if (showLabels) ...[
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(n, (i) {
+              final int power = n - 1 - i;
+              return SizedBox(
+                width: colWidth,
+                child: Column(
+                  children: [
+                    Text(
+                      '${1 << power}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontSize: labelSize, color: const Color(0xFF3A6A3A)),
+                    ),
+                    Text(
+                      '2${_supers[power]}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontSize: exponentSize,
+                          color: const Color(0xFF2A5A2A)),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ],
       ],
     );
   }
