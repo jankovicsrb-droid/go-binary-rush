@@ -17,9 +17,22 @@ class BitRow extends StatelessWidget {
 
   static const _supers = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷'];
 
+  double _tileSize(int n) {
+    if (n <= 4) return 64;
+    if (n <= 5) return 56;
+    if (n <= 6) return 48;
+    if (n <= 7) return 42;
+    return 36;
+  }
+
   @override
   Widget build(BuildContext context) {
     final int n = bits.length;
+    final double ts = _tileSize(n);
+    final double colWidth = ts + 8;
+    final double labelSize = (ts * 0.2).clamp(10, 14);
+    final double exponentSize = (ts * 0.17).clamp(9, 12);
+
     return Column(
       children: [
         Row(
@@ -30,6 +43,7 @@ class BitRow extends StatelessWidget {
               value: bits[i],
               onTap: enabled ? () => onToggle(i) : () {},
               glowing: glowing,
+              size: ts,
             ),
           ),
         ),
@@ -39,18 +53,21 @@ class BitRow extends StatelessWidget {
           children: List.generate(n, (i) {
             final int power = n - 1 - i;
             return SizedBox(
-              width: 76,
+              width: colWidth,
               child: Column(
                 children: [
                   Text(
                     '${1 << power}',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF3A6A3A)),
+                    style: TextStyle(
+                        fontSize: labelSize, color: const Color(0xFF3A6A3A)),
                   ),
                   Text(
                     '2${_supers[power]}',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF2A5A2A)),
+                    style: TextStyle(
+                        fontSize: exponentSize,
+                        color: const Color(0xFF2A5A2A)),
                   ),
                 ],
               ),

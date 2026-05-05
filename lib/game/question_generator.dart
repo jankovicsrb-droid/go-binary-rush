@@ -3,19 +3,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'difficulty.dart';
 
 class QuestionGenerator {
-  static const _keyTier = 'current_tier';
-  static const _seenPrefix = 'seen_tier_';
-
   final SharedPreferences _prefs;
   final Random _random = Random();
+  final String _tierKey;
+  final String _seenPrefix;
   int _tierIndex;
 
-  QuestionGenerator._(this._prefs, int tier)
-      : _tierIndex = tier.clamp(0, kTiers.length - 1);
+  QuestionGenerator._(this._prefs, int tier, String mode)
+      : _tierIndex = tier.clamp(0, kTiers.length - 1),
+        _tierKey = '${mode}_current_tier',
+        _seenPrefix = '${mode}_seen_tier_';
 
-  static Future<QuestionGenerator> create() async {
+  static Future<QuestionGenerator> create({String mode = 'match'}) async {
     final prefs = await SharedPreferences.getInstance();
-    return QuestionGenerator._(prefs, prefs.getInt(_keyTier) ?? 0);
+    return QuestionGenerator._(
+        prefs, prefs.getInt('${mode}_current_tier') ?? 0, mode);
   }
 
   int get currentBits => kTiers[_tierIndex].bits;
@@ -52,7 +54,7 @@ class QuestionGenerator {
   void _advanceTier() {
     if (_tierIndex < kTiers.length - 1) {
       _tierIndex++;
-      _prefs.setInt(_keyTier, _tierIndex);
+      _prefs.setInt(_tierKey, _tierIndex);
     } else {
       _prefs.remove('$_seenPrefix$_tierIndex');
     }

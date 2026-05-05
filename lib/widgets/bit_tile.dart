@@ -9,24 +9,27 @@ class BitTile extends StatelessWidget {
   final int value;
   final VoidCallback onTap;
   final bool glowing;
+  final double size;
 
   const BitTile({
     super.key,
     required this.value,
     required this.onTap,
     this.glowing = false,
+    this.size = 64,
   });
 
   @override
   Widget build(BuildContext context) {
     final bool on = value == 1;
+    final double fontSize = size * 0.47;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 80),
-        margin: const EdgeInsets.symmetric(horizontal: 6),
-        width: 64,
-        height: 64,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        width: size,
+        height: size,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: on ? _activeBg : Colors.black,
@@ -36,8 +39,8 @@ class BitTile extends StatelessWidget {
           ),
           boxShadow: (on && glowing)
               ? [
-                  BoxShadow(
-                    color: const Color(0xAA00FF41),
+                  const BoxShadow(
+                    color: Color(0xAA00FF41),
                     blurRadius: 16,
                     spreadRadius: 2,
                   ),
@@ -47,7 +50,7 @@ class BitTile extends StatelessWidget {
         child: Text(
           value.toString(),
           style: TextStyle(
-            fontSize: 30,
+            fontSize: fontSize,
             color: on ? _active : _inactiveText,
             fontWeight: on ? FontWeight.bold : FontWeight.normal,
           ),

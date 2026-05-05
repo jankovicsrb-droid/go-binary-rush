@@ -6,24 +6,27 @@ import '../widgets/bit_row.dart';
 const Color _green = Color(0xFF00FF41);
 const Color _dimGreen = Color(0xFF2E6E2E);
 const Color _muteGreen = Color(0xFF1A3A1A);
+const Color _red = Color(0xFFFF4040);
 
-class GameScreen extends StatefulWidget {
-  const GameScreen({super.key});
+class ReverseScreen extends StatefulWidget {
+  const ReverseScreen({super.key});
 
   @override
-  State<GameScreen> createState() => _GameScreenState();
+  State<ReverseScreen> createState() => _ReverseScreenState();
 }
 
-class _GameScreenState extends State<GameScreen>
+class _ReverseScreenState extends State<ReverseScreen>
     with SingleTickerProviderStateMixin {
   QuestionGenerator? _generator;
   ScoreEngine? _scoreEngine;
   int _target = 0;
   List<int> _bits = [];
   bool _solved = false;
+  bool _wrong = false;
   bool _loaded = false;
   double _flashOpacity = 0.0;
 
+  final TextEditingController _inputController = TextEditingController();
   late AnimationController _pulseController;
   late Animation<double> _pulseAnim;
 
@@ -37,65 +40,81 @@ class _GameScreenState extends State<GameScreen>
     _pulseAnim = Tween<double>(begin: 0.2, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+    _inputController.addListener(_onInput);
     _initGame();
   }
 
   Future<void> _initGame() async {
     final results = await Future.wait([
-      QuestionGenerator.create(mode: 'match'),
-      ScoreEngine.create(mode: 'match'),
+      QuestionGenerator.create(mode: 'reverse'),
+      ScoreEngine.create(mode: 'reverse'),
     ]);
     final gen = results[0] as QuestionGenerator;
     final score = results[1] as ScoreEngine;
+    final target = gen.next();
     setState(() {
       _generator = gen;
       _scoreEngine = score;
-      _target = gen.next();
-      _bits = List.filled(gen.currentBits, 0);
+      _target = target;
+      _bits = _toBits(target, gen.currentBits);
       _loaded = true;
     });
   }
 
   @override
   void dispose() {
+    _inputController.dispose();
     _pulseController.dispose();
     super.dispose();
   }
 
-  int _computeValue(List<int> bits) {
-    int val = 0;
-    for (int i = 0; i < bits.length; i++) {
-      val += bits[i] * (1 << (bits.length - 1 - i));
-    }
-    return val;
+  List<int> _toBits(int value, int numBits) =>
+      List.generate(numBits, (i) => (value >> (numBits - 1 - i)) & 1);
+
+  void _onInput() {
+    if (_solved || _wrong) return;
+    final input = int.tryParse(_inputController.text.trim());
+    if (input != null && input == _target) _onCorrect();
   }
 
-  void _toggleBit(int index) {
-    final newBits = List<int>.from(_bits);
-    newBits[index] = newBits[index] == 0 ? 1 : 0;
-    final correct = _computeValue(newBits) == _target;
-    if (correct) _scoreEngine!.onCorrect();
-    setState(() {
-      _bits = newBits;
-      _solved = correct;
-      if (correct) _flashOpacity = 1.0;
-    });
-    if (correct) {
-      _pulseController.repeat(reverse: true);
-      Future.delayed(const Duration(milliseconds: 120), () {
-        if (mounted) setState(() => _flashOpacity = 0.0);
+  void _submit() {
+    if (_solved) return;
+    final input = int.tryParse(_inputController.text.trim());
+    if (input == null) return;
+    if (input == _target) {
+      _onCorrect();
+    } else {
+      setState(() => _wrong = true);
+      _inputController.clear();
+      Future.delayed(const Duration(milliseconds: 700), () {
+        if (mounted) setState(() => _wrong = false);
       });
     }
+  }
+
+  void _onCorrect() {
+    _scoreEngine!.onCorrect();
+    _inputController.clear();
+    setState(() {
+      _solved = true;
+      _flashOpacity = 1.0;
+    });
+    _pulseController.repeat(reverse: true);
+    Future.delayed(const Duration(milliseconds: 120), () {
+      if (mounted) setState(() => _flashOpacity = 0.0);
+    });
   }
 
   void _next() {
     _pulseController.stop();
     _pulseController.reset();
     final gen = _generator!;
+    final target = gen.next();
     setState(() {
-      _target = gen.next();
-      _bits = List.filled(gen.currentBits, 0);
+      _target = target;
+      _bits = _toBits(target, gen.currentBits);
       _solved = false;
+      _wrong = false;
     });
   }
 
@@ -108,7 +127,6 @@ class _GameScreenState extends State<GameScreen>
       );
     }
 
-    final currentValue = _computeValue(_bits);
     final score = _scoreEngine!;
     final tier = _generator!.currentTier;
 
@@ -117,7 +135,7 @@ class _GameScreenState extends State<GameScreen>
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF2E6E2E)),
+        iconTheme: const IconThemeData(color: _dimGreen),
         title: const Text(
           'GO BINARY RUSH',
           style: TextStyle(color: _green, fontSize: 15, letterSpacing: 4),
@@ -137,22 +155,20 @@ class _GameScreenState extends State<GameScreen>
                 const SizedBox(height: 16),
                 _hud(tier, score),
                 const Spacer(),
-                _targetDisplay(),
-                const SizedBox(height: 44),
+                const Text(
+                  'DECODE',
+                  style: TextStyle(
+                      fontSize: 11, color: _dimGreen, letterSpacing: 5),
+                ),
+                const SizedBox(height: 24),
                 BitRow(
                   bits: _bits,
-                  onToggle: _toggleBit,
-                  enabled: !_solved,
-                  glowing: _solved,
+                  onToggle: (_) {},
+                  enabled: false,
+                  glowing: false,
                 ),
-                const SizedBox(height: 28),
-                Text(
-                  '= $currentValue',
-                  style: TextStyle(
-                    fontSize: 32,
-                    color: _solved ? _green : _dimGreen,
-                  ),
-                ),
+                const SizedBox(height: 44),
+                _inputArea(),
                 const SizedBox(height: 44),
                 _feedback(),
                 const Spacer(),
@@ -171,6 +187,58 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
+  Widget _inputArea() {
+    return Column(
+      children: [
+        const Text(
+          'DECIMAL VALUE?',
+          style:
+              TextStyle(fontSize: 10, color: _dimGreen, letterSpacing: 3),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: 140,
+          child: TextField(
+            controller: _inputController,
+            enabled: !_solved,
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            autofocus: true,
+            style: TextStyle(
+              fontSize: 44,
+              color: _wrong ? _red : _green,
+            ),
+            decoration: InputDecoration(
+              hintText: '?',
+              hintStyle:
+                  const TextStyle(color: _dimGreen, fontSize: 44),
+              border: UnderlineInputBorder(
+                  borderSide: BorderSide(color: _dimGreen)),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                    color: _wrong ? _red : _green, width: 2),
+              ),
+              enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: _dimGreen)),
+              disabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: _muteGreen)),
+            ),
+            onSubmitted: (_) => _submit(),
+          ),
+        ),
+        const SizedBox(height: 10),
+        AnimatedOpacity(
+          opacity: _wrong ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 100),
+          child: const Text(
+            'WRONG',
+            style: TextStyle(fontSize: 13, color: _red, letterSpacing: 5),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _hud(int tier, ScoreEngine score) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -185,7 +253,6 @@ class _GameScreenState extends State<GameScreen>
 
   Widget _stat(String label, String value) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(label,
             style: const TextStyle(
@@ -194,27 +261,6 @@ class _GameScreenState extends State<GameScreen>
         Text(value,
             style: const TextStyle(
                 fontSize: 14, color: _green, letterSpacing: 1)),
-      ],
-    );
-  }
-
-  Widget _targetDisplay() {
-    return Column(
-      children: [
-        const Text(
-          'TARGET',
-          style: TextStyle(fontSize: 11, color: _dimGreen, letterSpacing: 5),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          '$_target',
-          style: const TextStyle(
-            fontSize: 80,
-            color: _green,
-            fontWeight: FontWeight.bold,
-            height: 1.0,
-          ),
-        ),
       ],
     );
   }
@@ -242,8 +288,8 @@ class _GameScreenState extends State<GameScreen>
               decoration: BoxDecoration(border: Border.all(color: _green)),
               child: const Text(
                 'NEXT  →',
-                style:
-                    TextStyle(fontSize: 15, color: _green, letterSpacing: 5),
+                style: TextStyle(
+                    fontSize: 15, color: _green, letterSpacing: 5),
               ),
             ),
           ),

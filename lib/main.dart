@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/game_screen.dart';
+import 'screens/menu_screen.dart';
 
 void main() {
   runApp(const BinaryRushApp());
@@ -30,7 +30,7 @@ class BinaryRushApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const GameScreen(),
+      home: const MenuScreen(),
     );
   }
 }

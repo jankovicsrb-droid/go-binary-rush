@@ -1,18 +1,19 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ScoreEngine {
-  static const _keyHighScore = 'high_score';
-
   final SharedPreferences _prefs;
+  final String _keyHighScore;
   int score = 0;
   int streak = 0;
   int highScore;
 
-  ScoreEngine._(this._prefs) : highScore = _prefs.getInt(_keyHighScore) ?? 0;
+  ScoreEngine._(this._prefs, String mode)
+      : _keyHighScore = '${mode}_high_score',
+        highScore = _prefs.getInt('${mode}_high_score') ?? 0;
 
-  static Future<ScoreEngine> create() async {
+  static Future<ScoreEngine> create({String mode = 'match'}) async {
     final prefs = await SharedPreferences.getInstance();
-    return ScoreEngine._(prefs);
+    return ScoreEngine._(prefs, mode);
   }
 
   void onCorrect() {
