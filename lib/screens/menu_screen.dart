@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'addition_screen.dart';
 import 'game_screen.dart';
 import 'reverse_screen.dart';
+import 'xor_screen.dart';
 
 const Color _green = Color(0xFF00FF41);
 const Color _dimGreen = Color(0xFF2E6E2E);
@@ -65,11 +66,14 @@ class MenuScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              const _ModeItem(
+              _ModeItem(
                 index: 4,
                 name: 'XOR',
                 subtitle: 'a  ⊕  b  =  ?',
-                locked: true,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const XorScreen()),
+                ),
               ),
               const SizedBox(height: 20),
               const _ModeItem(
