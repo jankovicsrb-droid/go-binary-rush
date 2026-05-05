@@ -1,0 +1,14 @@
+class Tier {
+  final int bits;
+  final List<int> targets;
+  const Tier({required this.bits, required this.targets});
+}
+
+final List<Tier> kTiers = [
+  Tier(bits: 4, targets: [1, 2, 4, 8, 15]),
+  Tier(bits: 4, targets: [3, 5, 6, 7, 9, 10, 11, 12, 13, 14]),
+  Tier(bits: 5, targets: List.generate(16, (i) => i + 16)),
+  Tier(bits: 6, targets: List.generate(32, (i) => i + 32)),
+  Tier(bits: 7, targets: List.generate(64, (i) => i + 64)),
+  Tier(bits: 8, targets: List.generate(128, (i) => i + 128)),
+];
