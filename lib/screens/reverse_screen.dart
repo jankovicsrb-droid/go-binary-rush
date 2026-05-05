@@ -40,7 +40,6 @@ class _ReverseScreenState extends State<ReverseScreen>
     _pulseAnim = Tween<double>(begin: 0.2, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-    _inputController.addListener(_onInput);
     _initGame();
   }
 
@@ -70,12 +69,6 @@ class _ReverseScreenState extends State<ReverseScreen>
 
   List<int> _toBits(int value, int numBits) =>
       List.generate(numBits, (i) => (value >> (numBits - 1 - i)) & 1);
-
-  void _onInput() {
-    if (_solved || _wrong) return;
-    final input = int.tryParse(_inputController.text.trim());
-    if (input != null && input == _target) _onCorrect();
-  }
 
   void _submit() {
     if (_solved) return;
@@ -235,6 +228,21 @@ class _ReverseScreenState extends State<ReverseScreen>
             style: TextStyle(fontSize: 13, color: _red, letterSpacing: 5),
           ),
         ),
+        const SizedBox(height: 16),
+        if (!_solved)
+          GestureDetector(
+            onTap: _submit,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
+              decoration: BoxDecoration(border: Border.all(color: _dimGreen)),
+              child: const Text(
+                'CONFIRM',
+                style:
+                    TextStyle(fontSize: 15, color: _green, letterSpacing: 5),
+              ),
+            ),
+          ),
       ],
     );
   }

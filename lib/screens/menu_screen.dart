@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'addition_screen.dart';
 import 'game_screen.dart';
+import 'reference_screen.dart';
 import 'reverse_screen.dart';
 import 'speed_burst_screen.dart';
 import 'xor_screen.dart';
@@ -85,6 +86,20 @@ class MenuScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                       builder: (_) => const SpeedBurstScreen()),
+                ),
+              ),
+              const SizedBox(height: 48),
+              Container(height: 1, color: _muteGreen),
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ReferenceScreen()),
+                ),
+                child: const Text(
+                  'REFERENCE  →',
+                  style: TextStyle(
+                      fontSize: 11, color: _dimGreen, letterSpacing: 4),
                 ),
               ),
             ],

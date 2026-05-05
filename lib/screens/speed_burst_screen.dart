@@ -473,15 +473,14 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
               fontWeight: FontWeight.bold,
               height: 1.0)),
       const SizedBox(height: 16),
-      _addRowUI('A', _bitsA, vA, _toggleAddA, showLabels: true),
+      _addRowUI('A', _bitsA, vA, _toggleAddA),
       const SizedBox(height: 10),
-      _addRowUI('B', _bitsB, vB, _toggleAddB, showLabels: false),
+      _addRowUI('B', _bitsB, vB, _toggleAddB),
     ]);
   }
 
   Widget _addRowUI(String lbl, List<int> bits, int v,
-      void Function(int) onToggle,
-      {required bool showLabels}) {
+      void Function(int) onToggle) {
     return Column(children: [
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Text(lbl,
@@ -496,8 +495,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
           bits: bits,
           onToggle: onToggle,
           enabled: !_questionSolved,
-          glowing: _questionSolved,
-          showLabels: showLabels),
+          glowing: _questionSolved),
     ]);
   }
 
@@ -527,8 +525,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
               bits: _xorC,
               onToggle: _toggleXorC,
               enabled: !_questionSolved,
-              glowing: _questionSolved,
-              showLabels: true),
+              glowing: _questionSolved),
         ]),
         const SizedBox(height: 6),
         Text('= $vC',
@@ -545,7 +542,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
               style: const TextStyle(
                   fontSize: 11, color: _dimGreen, letterSpacing: 2))),
       const SizedBox(width: 8),
-      BitRow(bits: bits, onToggle: (_) {}, enabled: false, showLabels: false),
+      BitRow(bits: bits, onToggle: (_) {}, enabled: false),
     ]);
   }
 

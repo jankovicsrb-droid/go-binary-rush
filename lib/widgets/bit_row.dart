@@ -14,7 +14,7 @@ class BitRow extends StatelessWidget {
     required this.onToggle,
     this.enabled = true,
     this.glowing = false,
-    this.showLabels = true,
+    this.showLabels = false,
   });
 
   static const _supers = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷'];

@@ -6,6 +6,7 @@ import '../widgets/bit_row.dart';
 const Color _green = Color(0xFF00FF41);
 const Color _dimGreen = Color(0xFF2E6E2E);
 const Color _muteGreen = Color(0xFF1A3A1A);
+const Color _red = Color(0xFFFF4040);
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -21,6 +22,7 @@ class _GameScreenState extends State<GameScreen>
   int _target = 0;
   List<int> _bits = [];
   bool _solved = false;
+  bool _wrong = false;
   bool _loaded = false;
   double _flashOpacity = 0.0;
 
@@ -71,19 +73,28 @@ class _GameScreenState extends State<GameScreen>
   }
 
   void _toggleBit(int index) {
+    if (_solved) return;
     final newBits = List<int>.from(_bits);
     newBits[index] = newBits[index] == 0 ? 1 : 0;
-    final correct = _computeValue(newBits) == _target;
-    if (correct) _scoreEngine!.onCorrect();
-    setState(() {
-      _bits = newBits;
-      _solved = correct;
-      if (correct) _flashOpacity = 1.0;
-    });
-    if (correct) {
+    setState(() => _bits = newBits);
+  }
+
+  void _confirm() {
+    if (_solved) return;
+    if (_computeValue(_bits) == _target) {
+      _scoreEngine!.onCorrect();
+      setState(() {
+        _solved = true;
+        _flashOpacity = 1.0;
+      });
       _pulseController.repeat(reverse: true);
       Future.delayed(const Duration(milliseconds: 120), () {
         if (mounted) setState(() => _flashOpacity = 0.0);
+      });
+    } else {
+      setState(() => _wrong = true);
+      Future.delayed(const Duration(milliseconds: 700), () {
+        if (mounted) setState(() => _wrong = false);
       });
     }
   }
@@ -96,6 +107,7 @@ class _GameScreenState extends State<GameScreen>
       _target = gen.next();
       _bits = List.filled(gen.currentBits, 0);
       _solved = false;
+      _wrong = false;
     });
   }
 
@@ -220,35 +232,55 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Widget _feedback() {
-    return AnimatedOpacity(
-      opacity: _solved ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 150),
-      child: Column(
+    if (_solved) {
+      return Column(
         children: [
           FadeTransition(
             opacity: _pulseAnim,
             child: const Text(
               'CORRECT',
-              style:
-                  TextStyle(fontSize: 26, color: _green, letterSpacing: 8),
+              style: TextStyle(fontSize: 26, color: _green, letterSpacing: 8),
             ),
           ),
           const SizedBox(height: 24),
           GestureDetector(
-            onTap: _solved ? _next : null,
+            onTap: _next,
             child: Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
               decoration: BoxDecoration(border: Border.all(color: _green)),
               child: const Text(
                 'NEXT  →',
-                style:
-                    TextStyle(fontSize: 15, color: _green, letterSpacing: 5),
+                style: TextStyle(fontSize: 15, color: _green, letterSpacing: 5),
               ),
             ),
           ),
         ],
-      ),
+      );
+    }
+    return Column(
+      children: [
+        AnimatedOpacity(
+          opacity: _wrong ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 100),
+          child: const Text(
+            'WRONG',
+            style: TextStyle(fontSize: 13, color: _red, letterSpacing: 5),
+          ),
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: _confirm,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
+            decoration: BoxDecoration(border: Border.all(color: _dimGreen)),
+            child: const Text(
+              'CONFIRM',
+              style: TextStyle(fontSize: 15, color: _green, letterSpacing: 5),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

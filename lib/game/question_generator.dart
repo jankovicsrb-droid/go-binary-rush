@@ -31,6 +31,9 @@ class QuestionGenerator {
     }
     final target = available[_random.nextInt(available.length)];
     _markSeen(target);
+    if (_getSeen().length >= kTiers[_tierIndex].cap) {
+      _advanceTier();
+    }
     return target;
   }
 
