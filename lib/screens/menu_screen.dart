@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'addition_screen.dart';
 import 'game_screen.dart';
 import 'reverse_screen.dart';
+import 'speed_burst_screen.dart';
 import 'xor_screen.dart';
 
 const Color _green = Color(0xFF00FF41);
@@ -76,11 +77,15 @@ class MenuScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              const _ModeItem(
+              _ModeItem(
                 index: 5,
                 name: 'SPEED BURST',
                 subtitle: '60 second blitz',
-                locked: true,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const SpeedBurstScreen()),
+                ),
               ),
             ],
           ),
@@ -94,58 +99,37 @@ class _ModeItem extends StatelessWidget {
   final int index;
   final String name;
   final String subtitle;
-  final bool locked;
   final VoidCallback? onTap;
 
   const _ModeItem({
     required this.index,
     required this.name,
     required this.subtitle,
-    this.locked = false,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final Color primary = locked ? _muteGreen : _green;
-    final Color sub = locked ? const Color(0xFF0F1F0F) : _dimGreen;
-
     return GestureDetector(
-      onTap: locked ? null : onTap,
+      onTap: onTap,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '[$index]',
-            style: TextStyle(color: primary, fontSize: 13, letterSpacing: 1),
-          ),
+          Text('[$index]',
+              style: const TextStyle(
+                  color: _green, fontSize: 13, letterSpacing: 1)),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      name,
-                      style: TextStyle(
-                          color: primary, fontSize: 15, letterSpacing: 3),
-                    ),
-                    if (locked) ...[
-                      const SizedBox(width: 12),
-                      Text(
-                        '[SOON]',
-                        style: TextStyle(
-                            color: _muteGreen, fontSize: 9, letterSpacing: 2),
-                      ),
-                    ],
-                  ],
-                ),
+                Text(name,
+                    style: const TextStyle(
+                        color: _green, fontSize: 15, letterSpacing: 3)),
                 const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(fontSize: 10, color: sub, letterSpacing: 1),
-                ),
+                Text(subtitle,
+                    style: const TextStyle(
+                        fontSize: 10, color: _dimGreen, letterSpacing: 1)),
               ],
             ),
           ),
