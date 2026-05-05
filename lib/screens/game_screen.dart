@@ -158,10 +158,12 @@ class _GameScreenState extends State<GameScreen>
               ],
             ),
           ),
-          AnimatedOpacity(
-            opacity: _flashOpacity,
-            duration: const Duration(milliseconds: 60),
-            child: Container(color: const Color(0x2200FF41)),
+          IgnorePointer(
+            child: AnimatedOpacity(
+              opacity: _flashOpacity,
+              duration: const Duration(milliseconds: 60),
+              child: Container(color: const Color(0x2200FF41)),
+            ),
           ),
         ],
       ),
