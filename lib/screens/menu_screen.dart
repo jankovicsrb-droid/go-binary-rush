@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'addition_screen.dart';
+import 'daily_challenge_screen.dart';
 import 'game_screen.dart';
 import 'reference_screen.dart';
 import 'reverse_screen.dart';
@@ -86,6 +87,17 @@ class MenuScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                       builder: (_) => const SpeedBurstScreen()),
+                ),
+              ),
+              const SizedBox(height: 20),
+              _ModeItem(
+                index: 6,
+                name: 'DAILY CHALLENGE',
+                subtitle: '10 questions · resets at midnight',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const DailyChallengeScreen()),
                 ),
               ),
               const SizedBox(height: 48),
