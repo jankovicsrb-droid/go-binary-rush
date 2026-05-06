@@ -22,6 +22,8 @@ class QuestionGenerator {
 
   int get currentBits => kTiers[_tierIndex].bits;
   int get currentTier => _tierIndex + 1;
+  int get tierSolvedCount => _getSeen().length;
+  int get tierCap => kTiers[_tierIndex].cap;
 
   int next() {
     final available = _available();

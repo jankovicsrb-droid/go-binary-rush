@@ -117,7 +117,7 @@ class _AdditionScreenState extends State<AdditionScreen>
     }
 
     final score = _scoreEngine!;
-    final tier = _generator!.currentTier;
+    final gen = _generator!;
     final valA = _computeValue(_bitsA);
     final valB = _computeValue(_bitsB);
 
@@ -144,7 +144,7 @@ class _AdditionScreenState extends State<AdditionScreen>
             child: Column(
               children: [
                 const SizedBox(height: 16),
-                _hud(tier, score),
+                _hud(gen, score),
                 const Spacer(),
                 _targetDisplay(),
                 const SizedBox(height: 28),
@@ -232,14 +232,29 @@ class _AdditionScreenState extends State<AdditionScreen>
     );
   }
 
-  Widget _hud(int tier, ScoreEngine score) {
+  Widget _hud(QuestionGenerator gen, ScoreEngine score) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _stat('TIER', 'T$tier'),
+        _tierStat(gen),
         _stat('SCORE', '${score.score}'),
         _stat('STREAK', '×${score.streak}'),
         _stat('BEST', '${score.highScore}'),
+      ],
+    );
+  }
+
+  Widget _tierStat(QuestionGenerator gen) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Text('TIER',
+            style: TextStyle(fontSize: 9, color: _dimGreen, letterSpacing: 2)),
+        const SizedBox(height: 2),
+        Text('T${gen.currentTier}',
+            style: const TextStyle(fontSize: 14, color: _green, letterSpacing: 1)),
+        Text('${gen.tierSolvedCount}/${gen.tierCap}',
+            style: const TextStyle(fontSize: 8, color: _dimGreen, letterSpacing: 1)),
       ],
     );
   }
