@@ -22,6 +22,7 @@ class _GameScreenState extends State<GameScreen>
   List<int> _bits = [];
   bool _solved = false;
   bool _loaded = false;
+  bool _hintOn = false;
   double _flashOpacity = 0.0;
 
   late AnimationController _pulseController;
@@ -98,6 +99,7 @@ class _GameScreenState extends State<GameScreen>
       _target = gen.next();
       _bits = List.filled(gen.currentBits, 0);
       _solved = false;
+      _hintOn = false;
     });
   }
 
@@ -148,12 +150,22 @@ class _GameScreenState extends State<GameScreen>
                   glowing: _solved,
                 ),
                 const SizedBox(height: 28),
-                Text(
-                  '= $currentValue',
-                  style: TextStyle(
-                    fontSize: 32,
-                    color: _solved ? _green : _dimGreen,
-                  ),
+                GestureDetector(
+                  onTap: _solved ? null : () => setState(() => _hintOn = !_hintOn),
+                  child: _solved
+                      ? Text(
+                          '= $currentValue',
+                          style: const TextStyle(fontSize: 32, color: _green),
+                        )
+                      : _hintOn
+                          ? Text(
+                              '= $currentValue',
+                              style: const TextStyle(fontSize: 32, color: _dimGreen),
+                            )
+                          : const Text(
+                              '[ HINT ]',
+                              style: TextStyle(fontSize: 13, color: _dimGreen, letterSpacing: 3),
+                            ),
                 ),
                 const SizedBox(height: 44),
                 _feedback(),
