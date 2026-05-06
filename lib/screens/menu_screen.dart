@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'addition_screen.dart';
 import 'daily_challenge_screen.dart';
 import 'game_screen.dart';
+import 'hex_screen.dart';
 import 'reference_screen.dart';
 import 'reverse_screen.dart';
 import 'speed_burst_screen.dart';
@@ -87,6 +88,16 @@ class MenuScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                       builder: (_) => const SpeedBurstScreen()),
+                ),
+              ),
+              const SizedBox(height: 20),
+              _ModeItem(
+                index: 7,
+                name: 'HEX MATCH',
+                subtitle: 'binary  →  hex',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const HexScreen()),
                 ),
               ),
               const SizedBox(height: 20),

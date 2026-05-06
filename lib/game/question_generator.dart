@@ -7,23 +7,28 @@ class QuestionGenerator {
   final Random _random = Random();
   final String _tierKey;
   final String _seenPrefix;
+  final List<Tier> _tiers;
   int _tierIndex;
 
-  QuestionGenerator._(this._prefs, int tier, String mode)
-      : _tierIndex = tier.clamp(0, kTiers.length - 1),
+  QuestionGenerator._(this._prefs, int tier, String mode, this._tiers)
+      : _tierIndex = tier.clamp(0, _tiers.length - 1),
         _tierKey = '${mode}_current_tier',
         _seenPrefix = '${mode}_seen_tier_';
 
-  static Future<QuestionGenerator> create({String mode = 'match'}) async {
+  static Future<QuestionGenerator> create({
+    String mode = 'match',
+    List<Tier>? tiers,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
+    final effectiveTiers = tiers ?? kTiers;
     return QuestionGenerator._(
-        prefs, prefs.getInt('${mode}_current_tier') ?? 0, mode);
+        prefs, prefs.getInt('${mode}_current_tier') ?? 0, mode, effectiveTiers);
   }
 
-  int get currentBits => kTiers[_tierIndex].bits;
+  int get currentBits => _tiers[_tierIndex].bits;
   int get currentTier => _tierIndex + 1;
   int get tierSolvedCount => _getSeen().length;
-  int get tierCap => kTiers[_tierIndex].cap;
+  int get tierCap => _tiers[_tierIndex].cap;
 
   int next() {
     final available = _available();
@@ -33,7 +38,7 @@ class QuestionGenerator {
     }
     final target = available[_random.nextInt(available.length)];
     _markSeen(target);
-    if (_getSeen().length >= kTiers[_tierIndex].cap) {
+    if (_getSeen().length >= _tiers[_tierIndex].cap) {
       _advanceTier();
     }
     return target;
@@ -41,7 +46,7 @@ class QuestionGenerator {
 
   List<int> _available() {
     final seen = _getSeen();
-    return kTiers[_tierIndex].targets.where((t) => !seen.contains(t)).toList();
+    return _tiers[_tierIndex].targets.where((t) => !seen.contains(t)).toList();
   }
 
   Set<int> _getSeen() {
@@ -57,7 +62,7 @@ class QuestionGenerator {
   }
 
   void _advanceTier() {
-    if (_tierIndex < kTiers.length - 1) {
+    if (_tierIndex < _tiers.length - 1) {
       _tierIndex++;
       _prefs.setInt(_tierKey, _tierIndex);
     } else {
