@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../game/question_generator.dart';
 import '../widgets/bit_row.dart';
@@ -174,6 +175,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
 
   void _onCorrect() {
     if (_questionSolved || _finished) return;
+    HapticFeedback.mediumImpact();
     setState(() {
       _questionSolved = true;
       _solved++;

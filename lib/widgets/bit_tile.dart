@@ -5,7 +5,7 @@ const Color _activeBg = Color(0xFF001800);
 const Color _inactiveBorder = Color(0xFF1A3A1A);
 const Color _inactiveText = Color(0xFF2E5A2E);
 
-class BitTile extends StatelessWidget {
+class BitTile extends StatefulWidget {
   final int value;
   final VoidCallback onTap;
   final bool glowing;
@@ -20,39 +20,55 @@ class BitTile extends StatelessWidget {
   });
 
   @override
+  State<BitTile> createState() => _BitTileState();
+}
+
+class _BitTileState extends State<BitTile> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    final bool on = value == 1;
-    final double fontSize = size * 0.47;
+    final bool on = widget.value == 1;
+    final double fontSize = widget.size * 0.47;
+
     return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 80),
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        width: size,
-        height: size,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: on ? _activeBg : Colors.black,
-          border: Border.all(
-            color: on ? _active : _inactiveBorder,
-            width: on ? 2 : 1,
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTap: widget.onTap,
+      child: AnimatedScale(
+        scale: _pressed ? 0.82 : 1.0,
+        duration: const Duration(milliseconds: 70),
+        curve: Curves.easeOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 80),
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          width: widget.size,
+          height: widget.size,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: on ? _activeBg : Colors.black,
+            border: Border.all(
+              color: on ? _active : _inactiveBorder,
+              width: on ? 2 : 1,
+            ),
+            boxShadow: (on && widget.glowing)
+                ? [
+                    const BoxShadow(
+                      color: Color(0xCC00FF41),
+                      blurRadius: 20,
+                      spreadRadius: 3,
+                    ),
+                  ]
+                : null,
           ),
-          boxShadow: (on && glowing)
-              ? [
-                  const BoxShadow(
-                    color: Color(0xAA00FF41),
-                    blurRadius: 16,
-                    spreadRadius: 2,
-                  ),
-                ]
-              : null,
-        ),
-        child: Text(
-          value.toString(),
-          style: TextStyle(
-            fontSize: fontSize,
-            color: on ? _active : _inactiveText,
-            fontWeight: on ? FontWeight.bold : FontWeight.normal,
+          child: Text(
+            widget.value.toString(),
+            style: TextStyle(
+              fontSize: fontSize,
+              color: on ? _active : _inactiveText,
+              fontWeight: on ? FontWeight.bold : FontWeight.normal,
+            ),
           ),
         ),
       ),

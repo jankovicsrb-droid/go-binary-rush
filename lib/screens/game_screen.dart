@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../game/question_generator.dart';
 import '../game/score_engine.dart';
 import '../widgets/bit_row.dart';
@@ -27,6 +28,7 @@ class _GameScreenState extends State<GameScreen>
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnim;
+  late Animation<double> _scaleAnim;
 
   @override
   void initState() {
@@ -36,6 +38,9 @@ class _GameScreenState extends State<GameScreen>
       duration: const Duration(milliseconds: 700),
     );
     _pulseAnim = Tween<double>(begin: 0.2, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+    _scaleAnim = Tween<double>(begin: 0.92, end: 1.06).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
     _initGame();
@@ -80,6 +85,7 @@ class _GameScreenState extends State<GameScreen>
   }
 
   void _triggerSuccess() {
+    HapticFeedback.mediumImpact();
     _scoreEngine!.onCorrect();
     setState(() {
       _solved = true;
@@ -252,11 +258,14 @@ class _GameScreenState extends State<GameScreen>
     if (_solved) {
       return Column(
         children: [
-          FadeTransition(
-            opacity: _pulseAnim,
-            child: const Text(
-              'CORRECT',
-              style: TextStyle(fontSize: 26, color: _green, letterSpacing: 8),
+          ScaleTransition(
+            scale: _scaleAnim,
+            child: FadeTransition(
+              opacity: _pulseAnim,
+              child: const Text(
+                'CORRECT',
+                style: TextStyle(fontSize: 26, color: _green, letterSpacing: 8),
+              ),
             ),
           ),
           const SizedBox(height: 24),

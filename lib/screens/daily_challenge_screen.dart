@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/bit_row.dart';
 
@@ -32,6 +33,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnim;
+  late Animation<double> _scaleAnim;
 
   @override
   void initState() {
@@ -41,6 +43,9 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
       duration: const Duration(milliseconds: 700),
     );
     _pulseAnim = Tween<double>(begin: 0.2, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+    _scaleAnim = Tween<double>(begin: 0.92, end: 1.06).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
     _init();
@@ -92,6 +97,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
   }
 
   void _triggerSuccess() {
+    HapticFeedback.mediumImpact();
     setState(() {
       _score += 10;
       _solved = true;
@@ -234,12 +240,14 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
     final isLast = _current + 1 >= _total;
     return Column(
       children: [
-        FadeTransition(
-          opacity: _pulseAnim,
-          child: const Text(
-            'CORRECT',
-            style:
-                TextStyle(fontSize: 26, color: _green, letterSpacing: 8),
+        ScaleTransition(
+          scale: _scaleAnim,
+          child: FadeTransition(
+            opacity: _pulseAnim,
+            child: const Text(
+              'CORRECT',
+              style: TextStyle(fontSize: 26, color: _green, letterSpacing: 8),
+            ),
           ),
         ),
         const SizedBox(height: 24),
