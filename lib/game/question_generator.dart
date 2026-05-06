@@ -10,8 +10,10 @@ class QuestionGenerator {
   final List<Tier> _tiers;
   int _tierIndex;
 
-  QuestionGenerator._(this._prefs, int tier, String mode, this._tiers)
-      : _tierIndex = tier.clamp(0, _tiers.length - 1),
+  QuestionGenerator._(SharedPreferences prefs, int tier, String mode, List<Tier> tiers)
+      : _prefs = prefs,
+        _tiers = tiers,
+        _tierIndex = tier.clamp(0, tiers.length - 1),
         _tierKey = '${mode}_current_tier',
         _seenPrefix = '${mode}_seen_tier_';
 
