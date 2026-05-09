@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../widgets/bit_row.dart';
+import '../theme.dart';
 
-const Color _green = Color(0xFF00FF41);
-const Color _dimGreen = Color(0xFF2E6E2E);
-const Color _muteGreen = Color(0xFF1A3A1A);
+const _green = AppColors.g4;
+const _dimGreen = AppColors.g2;
+const _muteGreen = AppColors.g1;
 
 class ReferenceScreen extends StatelessWidget {
   const ReferenceScreen({super.key});

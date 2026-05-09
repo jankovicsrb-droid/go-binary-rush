@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'bit_tile.dart';
+import '../theme.dart';
 
 class BitRow extends StatelessWidget {
   final List<int> bits;
@@ -63,14 +64,14 @@ class BitRow extends StatelessWidget {
                       '${1 << power}',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          fontSize: labelSize, color: const Color(0xFF3A6A3A)),
+                          fontSize: labelSize, color: AppColors.g2),
                     ),
                     Text(
                       '2${_supers[power]}',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           fontSize: exponentSize,
-                          color: const Color(0xFF2A5A2A)),
+                          color: AppColors.g1),
                     ),
                   ],
                 ),
