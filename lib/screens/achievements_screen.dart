@@ -154,8 +154,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     alignment: Alignment.centerLeft,
                     widthFactor: pct,
                     child: Container(
-                        color: AppColors.g3,
-                        decoration: BoxDecoration(boxShadow: AppGlow.sm)),
+                        decoration: BoxDecoration(
+                            color: AppColors.g3, boxShadow: AppGlow.sm)),
                   ),
                 ),
               ),
