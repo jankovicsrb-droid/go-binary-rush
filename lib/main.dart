@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/menu_screen.dart';
+import 'screens/main_shell.dart';
 import 'theme.dart';
 import 'widgets/crt_overlay.dart';
 
@@ -17,7 +17,7 @@ class BinaryRushApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
       builder: (context, child) => CrtOverlay(child: child!),
-      home: const MenuScreen(),
+      home: const MainShell(),
     );
   }
 }

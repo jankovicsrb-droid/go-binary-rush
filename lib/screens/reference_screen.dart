@@ -19,9 +19,8 @@ class ReferenceScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        iconTheme: const IconThemeData(color: _dimGreen),
-        title: const Text('REFERENCE',
-            style: TextStyle(color: _green, fontSize: 15, letterSpacing: 4)),
+        automaticallyImplyLeading: false,
+        title: Text('REFERENCE', style: AppText.label()),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: _muteGreen),

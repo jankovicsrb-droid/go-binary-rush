@@ -1,134 +1,143 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'addition_screen.dart';
 import 'daily_challenge_screen.dart';
 import 'game_screen.dart';
 import 'hex_screen.dart';
-import 'reference_screen.dart';
 import 'reverse_screen.dart';
 import 'speed_burst_screen.dart';
 import 'xor_screen.dart';
 import '../theme.dart';
 
-const _green = AppColors.g4;
-const _dimGreen = AppColors.g2;
-const _muteGreen = AppColors.g1;
-
-class MenuScreen extends StatelessWidget {
+class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
+
+  @override
+  State<MenuScreen> createState() => _MenuScreenState();
+}
+
+class _MenuScreenState extends State<MenuScreen> {
+  Map<String, int> _bestScores = {};
+  int _tier = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _bestScores = {
+        'match':   prefs.getInt('match_high_score') ?? 0,
+        'reverse': prefs.getInt('reverse_high_score') ?? 0,
+        'addition':prefs.getInt('addition_high_score') ?? 0,
+        'xor':     prefs.getInt('xor_high_score') ?? 0,
+        'speed':   prefs.getInt('speed_match_high_score') ?? 0,
+        'hex':     prefs.getInt('hex_high_score') ?? 0,
+      };
+      _tier = (prefs.getInt('match_current_tier') ?? 0) + 1;
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _load();
+  }
+
+  void _push(Widget screen) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => screen))
+        .then((_) => _load());
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 24),
-              const Text(
-                'GO BINARY RUSH',
-                style: TextStyle(
-                    color: _green, fontSize: 20, letterSpacing: 4),
-              ),
-              const SizedBox(height: 8),
-              Container(height: 1, color: _muteGreen),
-              const SizedBox(height: 40),
-              const Text(
-                'SELECT MODE',
-                style: TextStyle(
-                    fontSize: 10, color: _dimGreen, letterSpacing: 5),
-              ),
-              const SizedBox(height: 28),
-              _ModeItem(
-                index: 1,
-                name: 'MATCH',
-                subtitle: 'decimal  →  binary',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const GameScreen()),
-                ),
-              ),
-              const SizedBox(height: 20),
-              _ModeItem(
-                index: 2,
-                name: 'REVERSE',
-                subtitle: 'binary  →  decimal',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ReverseScreen()),
-                ),
-              ),
-              const SizedBox(height: 20),
-              _ModeItem(
-                index: 3,
-                name: 'ADDITION',
-                subtitle: 'row_a + row_b = target',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AdditionScreen()),
-                ),
-              ),
-              const SizedBox(height: 20),
-              _ModeItem(
-                index: 4,
-                name: 'XOR',
-                subtitle: 'a  ⊕  b  =  ?',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const XorScreen()),
-                ),
-              ),
-              const SizedBox(height: 20),
-              _ModeItem(
-                index: 5,
-                name: 'SPEED BURST',
-                subtitle: '60 second blitz',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const SpeedBurstScreen()),
-                ),
-              ),
-              const SizedBox(height: 20),
-              _ModeItem(
-                index: 7,
-                name: 'HEX MATCH',
-                subtitle: 'binary  →  hex',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HexScreen()),
-                ),
-              ),
-              const SizedBox(height: 20),
-              _ModeItem(
-                index: 6,
-                name: 'DAILY CHALLENGE',
-                subtitle: '10 questions · resets at midnight',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const DailyChallengeScreen()),
-                ),
-              ),
-              const SizedBox(height: 48),
-              Container(height: 1, color: _muteGreen),
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ReferenceScreen()),
-                ),
-                child: const Text(
-                  'REFERENCE  →',
-                  style: TextStyle(
-                      fontSize: 11, color: _dimGreen, letterSpacing: 4),
-                ),
-              ),
-            ],
-          ),
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: Text('GO BINARY RUSH', style: AppText.label()),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: AppColors.g1),
         ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        children: [
+          _welcomeBanner(),
+          const SizedBox(height: 28),
+          Text('SELECT MODE', style: AppText.kicker()),
+          const SizedBox(height: 20),
+          _ModeItem(
+            index: 1, name: 'MATCH', sub: 'decimal  →  binary',
+            best: _bestScores['match'],
+            onTap: () => _push(const GameScreen()),
+          ),
+          _ModeItem(
+            index: 2, name: 'REVERSE', sub: 'binary   →  decimal',
+            best: _bestScores['reverse'],
+            onTap: () => _push(const ReverseScreen()),
+          ),
+          _ModeItem(
+            index: 3, name: 'ADDITION', sub: 'A + B = target',
+            best: _bestScores['addition'],
+            onTap: () => _push(const AdditionScreen()),
+          ),
+          _ModeItem(
+            index: 4, name: 'XOR', sub: 'A ⊕ B = C',
+            best: _bestScores['xor'],
+            onTap: () => _push(const XorScreen()),
+          ),
+          _ModeItem(
+            index: 5, name: 'SPEED BURST', sub: '60 second blitz',
+            best: _bestScores['speed'],
+            onTap: () => _push(const SpeedBurstScreen()),
+          ),
+          _ModeItem(
+            index: 6, name: 'HEX MATCH', sub: 'binary  →  hex',
+            best: _bestScores['hex'],
+            onTap: () => _push(const HexScreen()),
+          ),
+          _ModeItem(
+            index: 7, name: 'DAILY', sub: '10 questions · daily reset',
+            best: null,
+            onTap: () => _push(const DailyChallengeScreen()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _welcomeBanner() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        border: Border(
+          left: BorderSide(color: AppColors.g3, width: 2),
+          top: BorderSide(color: AppColors.g1),
+          right: BorderSide(color: AppColors.g1),
+          bottom: BorderSide(color: AppColors.g1),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text('WELCOME BACK',
+              style: AppText.kicker(color: AppColors.g2).copyWith(letterSpacing: 3)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.g2),
+            ),
+            child: Text('TIER · T$_tier',
+                style: AppText.mono(size: 10, color: AppColors.g3)),
+          ),
+        ],
       ),
     );
   }
@@ -137,42 +146,57 @@ class MenuScreen extends StatelessWidget {
 class _ModeItem extends StatelessWidget {
   final int index;
   final String name;
-  final String subtitle;
-  final VoidCallback? onTap;
+  final String sub;
+  final int? best;
+  final VoidCallback onTap;
 
   const _ModeItem({
     required this.index,
     required this.name,
-    required this.subtitle,
-    this.onTap,
+    required this.sub,
+    required this.best,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('[$index]',
-              style: const TextStyle(
-                  color: _green, fontSize: 13, letterSpacing: 1)),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name,
-                    style: const TextStyle(
-                        color: _green, fontSize: 15, letterSpacing: 3)),
-                const SizedBox(height: 2),
-                Text(subtitle,
-                    style: const TextStyle(
-                        fontSize: 10, color: _dimGreen, letterSpacing: 1)),
-              ],
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text('[$index]',
+                style: AppText.mono(size: 13, color: AppColors.g3)),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name, style: AppText.label()),
+                  const SizedBox(height: 2),
+                  Text(sub, style: AppText.mono(size: 10, color: AppColors.g2)),
+                ],
+              ),
             ),
-          ),
-        ],
+            if (best != null) ...[
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('★ $best',
+                      style: AppText.mono(
+                          size: 12,
+                          color: best! > 0 ? AppColors.g3 : AppColors.g1)),
+                  Text('BEST',
+                      style: AppText.kicker(
+                          color: best! > 0 ? AppColors.g2 : AppColors.g1)),
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
