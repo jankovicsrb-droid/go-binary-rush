@@ -1,0 +1,389 @@
+/* ── Bit tile (the core game atom) ───────────────────────────── */
+.bit-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.bit-row.tight { gap: 4px; }
+.bit {
+  width: 52px;
+  height: 64px;
+  border: 1px solid var(--g-1);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--g-2);
+  background: rgba(10, 26, 10, 0.45);
+  position: relative;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  font-variant-numeric: tabular-nums;
+}
+.bit.on {
+  color: var(--g-5);
+  border-color: var(--g-3);
+  background: rgba(40, 90, 50, 0.35);
+  box-shadow: var(--glow-md), inset 0 0 14px rgba(125, 255, 151, 0.25);
+  text-shadow: var(--glow-md);
+}
+.bit.locked {
+  cursor: default;
+  border-color: var(--g-1);
+  color: var(--g-2);
+  background: transparent;
+  box-shadow: none;
+  text-shadow: none;
+}
+.bit.locked.on { color: var(--g-3); border-color: var(--g-2); text-shadow: var(--glow-sm); }
+.bit.flash { animation: flash 0.35s ease; }
+@keyframes flash {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.12); box-shadow: var(--glow-lg); }
+  100% { transform: scale(1); }
+}
+.bit.dim { opacity: 0.45; }
+
+/* small bit (for HUD / preview) */
+.bit.sm {
+  width: 28px; height: 34px;
+  font-size: 16px;
+  border-radius: 2px;
+}
+.bit.xs {
+  width: 20px; height: 22px;
+  font-size: 12px;
+  border-radius: 2px;
+}
+
+/* Bit weight ladder — the small "128 64 32…" labels above bits */
+.weights {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.weights .w {
+  width: 52px;
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  color: var(--g-1);
+  font-variant-numeric: tabular-nums;
+}
+.weights .w.active { color: var(--g-3); text-shadow: var(--glow-sm); }
+.weights .w.live { color: var(--amber); text-shadow: var(--glow-amber); }
+
+/* Nibble bracket — used in hex screen */
+.nibble-bracket {
+  position: relative;
+  padding: 12px 8px 6px;
+  border: 1px dashed var(--g-1);
+  border-radius: 3px;
+}
+.nibble-bracket .lbl {
+  position: absolute;
+  top: -8px; left: 8px;
+  background: var(--bg);
+  padding: 0 6px;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--g-2);
+}
+.nibble-bracket.active { border-color: var(--g-3); }
+.nibble-bracket.active .lbl { color: var(--g-4); text-shadow: var(--glow-sm); }
+
+/* Keypad */
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 16px;
+}
+.keypad.three { grid-template-columns: repeat(3, 1fr); }
+.key {
+  height: 42px;
+  border: 1px solid var(--g-1);
+  border-radius: 3px;
+  background: rgba(10, 26, 10, 0.5);
+  color: var(--g-3);
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  letter-spacing: 0.05em;
+  transition: all 0.1s;
+}
+.key:hover { border-color: var(--g-3); color: var(--g-4); box-shadow: var(--glow-sm); }
+.key.dim { color: var(--g-1); border-color: rgba(40, 90, 50, 0.2); cursor: not-allowed; }
+.key.dim:hover { box-shadow: none; }
+.key.action { color: var(--amber); border-color: var(--amber-dim); }
+.key.action:hover { box-shadow: var(--glow-amber); border-color: var(--amber); }
+
+/* Input field — terminal underline */
+.field {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px;
+  height: 56px;
+  color: var(--g-4);
+  text-shadow: var(--glow-md);
+  border-bottom: 1px solid var(--g-2);
+  position: relative;
+  font-variant-numeric: tabular-nums;
+}
+.field .ph { color: var(--g-1); }
+
+/* Target display (big number) */
+.target-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 14px 0 16px;
+}
+.target-box .lbl {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--g-2);
+}
+.target-box .val {
+  font-size: 64px;
+  font-weight: 700;
+  color: var(--g-5);
+  text-shadow: var(--glow-lg);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.target-box .val.med { font-size: 48px; }
+
+/* Live preview row — shows running decimal value as bits flip */
+.live-decimal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--g-2);
+  letter-spacing: 0.12em;
+}
+.live-decimal .num {
+  color: var(--g-4);
+  font-size: 18px;
+  font-weight: 600;
+  text-shadow: var(--glow-sm);
+  font-variant-numeric: tabular-nums;
+}
+.live-decimal .num.match { color: var(--g-5); text-shadow: var(--glow-md); }
+
+/* ASCII feedback frame */
+.ascii-feedback {
+  border: 1px solid var(--g-3);
+  padding: 10px 14px;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-align: center;
+  color: var(--g-4);
+  text-shadow: var(--glow-sm);
+  border-radius: 2px;
+  background: rgba(40, 90, 50, 0.12);
+}
+.ascii-feedback.err { border-color: var(--red); color: var(--red); text-shadow: var(--glow-red); background: rgba(255,77,77,0.08); }
+.ascii-feedback.amber { border-color: var(--amber-dim); color: var(--amber); text-shadow: var(--glow-amber); background: rgba(255,181,71,0.08); }
+
+/* Progress dots / pips */
+.pips { display: flex; gap: 4px; }
+.pip {
+  width: 14px; height: 4px; border-radius: 1px;
+  background: var(--g-1);
+}
+.pip.done { background: var(--g-3); box-shadow: var(--glow-sm); }
+.pip.cur { background: var(--g-4); box-shadow: var(--glow-md); }
+.pip.miss { background: var(--red); }
+
+/* Mode card (home list) */
+.mode-list { display: flex; flex-direction: column; gap: 14px; }
+.mode {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: start;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 0;
+  border-left: 2px solid transparent;
+  padding-left: 6px;
+  margin-left: -6px;
+  transition: all 0.12s;
+}
+.mode:hover { border-left-color: var(--g-3); }
+.mode .num {
+  color: var(--g-2);
+  font-size: 12px;
+  padding-top: 2px;
+}
+.mode .name {
+  color: var(--g-4);
+  text-shadow: var(--glow-sm);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.mode .sub {
+  color: var(--g-2);
+  font-size: 10px;
+  margin-top: 2px;
+  letter-spacing: 0.05em;
+}
+.mode .badge {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--g-2);
+  text-align: right;
+  padding-top: 2px;
+}
+.mode .badge .b {
+  color: var(--g-3);
+  font-weight: 600;
+}
+
+/* Bottom dock / nav */
+.dock {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  display: flex;
+  border-top: 1px solid var(--g-1);
+  padding: 10px 0 18px;
+  background: linear-gradient(to top, var(--bg), rgba(0,0,0,0.6));
+  z-index: 3;
+}
+.dock .tab {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  font-size: 9px; letter-spacing: 0.18em;
+  color: var(--g-1);
+  cursor: pointer;
+}
+.dock .tab .ico { font-size: 11px; opacity: 0.7; }
+.dock .tab.on { color: var(--g-4); text-shadow: var(--glow-sm); }
+.dock .tab.on .ico { opacity: 1; }
+
+/* Sparkline (run history) */
+.spark {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 36px;
+}
+.spark .b {
+  flex: 1;
+  background: var(--g-2);
+  border-radius: 1px 1px 0 0;
+  min-height: 2px;
+  position: relative;
+}
+.spark .b.peak { background: var(--g-4); box-shadow: var(--glow-sm); }
+
+/* Heatmap (errors per bit) */
+.heat-row { display: flex; gap: 4px; }
+.heat-cell {
+  flex: 1;
+  height: 22px;
+  border: 1px solid var(--g-1);
+  border-radius: 2px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  color: var(--g-2);
+  font-variant-numeric: tabular-nums;
+}
+.heat-cell[data-h="0"] { background: rgba(40, 90, 50, 0.05); }
+.heat-cell[data-h="1"] { background: rgba(80, 200, 110, 0.12); border-color: var(--g-2); color: var(--g-3); }
+.heat-cell[data-h="2"] { background: rgba(255, 181, 71, 0.18); border-color: var(--amber-dim); color: var(--amber); }
+.heat-cell[data-h="3"] { background: rgba(255, 77, 77, 0.22); border-color: rgba(255,77,77,0.4); color: var(--red); }
+
+/* Achievement tile */
+.ach {
+  display: grid;
+  grid-template-columns: 38px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--g-1);
+}
+.ach .glyph {
+  width: 38px; height: 38px;
+  border: 1px solid var(--g-1);
+  border-radius: 2px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  color: var(--g-1);
+}
+.ach.unlocked .glyph {
+  border-color: var(--g-3);
+  color: var(--g-4);
+  text-shadow: var(--glow-sm);
+}
+.ach .name { font-size: 12px; color: var(--g-3); letter-spacing: 0.1em; font-weight: 600; }
+.ach.unlocked .name { color: var(--g-4); text-shadow: var(--glow-sm); }
+.ach .sub { font-size: 9px; color: var(--g-2); letter-spacing: 0.05em; }
+.ach .lock { font-size: 9px; color: var(--g-1); letter-spacing: 0.1em; }
+.ach.unlocked .lock { color: var(--g-3); }
+
+/* Timer ring (simple) */
+.ring-wrap { position: relative; width: 64px; height: 64px; }
+.ring-wrap svg { transform: rotate(-90deg); }
+.ring-wrap .num {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700; color: var(--g-4);
+  text-shadow: var(--glow-md);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Generic table-ish row */
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--g-1);
+}
+.row:last-child { border-bottom: 0; }
+.row .lbl { color: var(--g-2); font-size: 11px; letter-spacing: 0.1em; }
+.row .val { color: var(--g-4); font-weight: 600; text-shadow: var(--glow-sm); font-variant-numeric: tabular-nums; }
+
+/* Tier badge */
+.tier-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  border: 1px solid var(--g-2);
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-size: 10px;
+  color: var(--g-3);
+  letter-spacing: 0.16em;
+  text-shadow: var(--glow-sm);
+}
+
+/* Subtle ASCII art helper */
+.ascii {
+  white-space: pre;
+  font-family: var(--mono);
+  color: var(--g-2);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+/* Tutorial / hint card */
+.hint-card {
+  border: 1px solid var(--g-1);
+  border-left: 2px solid var(--amber);
+  padding: 10px 12px;
+  font-size: 11px;
+  color: var(--g-3);
+  background: rgba(255, 181, 71, 0.04);
+  letter-spacing: 0.04em;
+  line-height: 1.55;
+}
+.hint-card .h { color: var(--amber); letter-spacing: 0.18em; font-size: 9px; margin-bottom: 6px; }
+.hint-card code { color: var(--g-4); }

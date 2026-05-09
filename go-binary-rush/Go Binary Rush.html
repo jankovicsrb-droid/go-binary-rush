@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Go Binary Rush — Terminal Redesign</title>
+  <link rel="stylesheet" href="terminal.css" />
+  <link rel="stylesheet" href="components.css" />
+  <style>
+    html, body { margin: 0; padding: 0; background: #f0eee9; height: 100%; }
+    body { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="atoms.jsx"></script>
+  <script type="text/babel" src="screens-core.jsx"></script>
+  <script type="text/babel" src="screens-game.jsx"></script>
+  <script type="text/babel" src="screens-modes.jsx"></script>
+  <script type="text/babel" src="screens-meta.jsx"></script>
+
+  <script type="text/babel">
+    const W = 360, H = 780;
+
+    function App() {
+      return (
+        <DesignCanvas>
+          <DCSection id="intro" title="Go Binary Rush — terminal redesign"
+            subtitle="Mobile portrait · Flutter target · single design language across all screens. Drag to reorder, click any artboard to focus.">
+          </DCSection>
+
+          <DCSection id="core" title="01 · Core navigation" subtitle="Where players land, where they look up, who they are.">
+            <DCArtboard id="home"     label="Home / Mode select" width={W} height={H}><HomeScreen /></DCArtboard>
+            <DCArtboard id="ref"      label="Reference / cheatsheet" width={W} height={H}><ReferenceScreen /></DCArtboard>
+            <DCArtboard id="profile"  label="Profile · stats · heatmap" width={W} height={H}><ProfileScreen /></DCArtboard>
+          </DCSection>
+
+          <DCSection id="play" title="02 · Game modes" subtitle="The seven modes. Each shares the HUD strip + bit weights + ASCII feedback so feedback feels consistent.">
+            <DCArtboard id="match"    label="MATCH · dec → bin (live)" width={W} height={H}><MatchScreen /></DCArtboard>
+            <DCArtboard id="match-ok" label="MATCH · correct · auto-advance" width={W} height={H}><MatchCorrectScreen /></DCArtboard>
+            <DCArtboard id="match-x"  label="MATCH · miss · diff hint" width={W} height={H}><MissScreen /></DCArtboard>
+            <DCArtboard id="reverse"  label="REVERSE · bin → dec · keypad" width={W} height={H}><ReverseScreen /></DCArtboard>
+            <DCArtboard id="add"      label="ADDITION · column + carry" width={W} height={H}><AdditionScreen /></DCArtboard>
+            <DCArtboard id="xor"      label="XOR · with truth-table hint" width={W} height={H}><XorScreen /></DCArtboard>
+            <DCArtboard id="speed"    label="SPEED BURST · 60s blitz" width={W} height={H}><SpeedBurstScreen /></DCArtboard>
+            <DCArtboard id="hex"      label="HEX MATCH · nibble groups" width={W} height={H}><HexMatchScreen /></DCArtboard>
+            <DCArtboard id="daily"    label="DAILY · 10-question run" width={W} height={H}><DailyScreen /></DCArtboard>
+          </DCSection>
+
+          <DCSection id="meta" title="03 · Meta & social" subtitle="What pulls players back tomorrow.">
+            <DCArtboard id="run"      label="Run summary · new best" width={W} height={H}><RunSummaryScreen /></DCArtboard>
+            <DCArtboard id="ach"      label="Achievements" width={W} height={H}><AchievementsScreen /></DCArtboard>
+            <DCArtboard id="lb"       label="Leaderboard · daily / weekly / all-time" width={W} height={H}><LeaderboardScreen /></DCArtboard>
+          </DCSection>
+
+          <DCSection id="notes" title="Design notes" subtitle="What changed and why.">
+            <DCPostIt id="note1" x={0} y={0} width={260}>
+              <b>Same vocabulary, more signal.</b><br/><br/>
+              Every screen shares: top status bar · app bar · HUD strip (tier / score / streak / best) · ASCII feedback line.
+              Players never relearn where to look.
+            </DCPostIt>
+            <DCPostIt id="note2" x={0} y={0} width={260}>
+              <b>Bit weights = the "ahaa".</b><br/><br/>
+              Tiny <code>128 64 32 16 8 4 2 1</code> labels above every bit row.
+              Active weights light green; the bit you're toggling lights amber.
+              Live decimal preview underneath ticks as you flip.
+            </DCPostIt>
+            <DCPostIt id="note3" x={0} y={0} width={260}>
+              <b>Feedback is ASCII, not modal.</b><br/><br/>
+              <code>[ OK ] ✓ +10 PTS · ×5</code> sits in-place where the input was.
+              Auto-advance after 0.4s (you said yes).
+              Misses show the diff: which bit was wrong, with weight breakdown.
+            </DCPostIt>
+            <DCPostIt id="note4" x={0} y={0} width={260}>
+              <b>HEX uses nibble brackets.</b><br/><br/>
+              The 8-bit binary is split into HIGH / LOW dashed brackets.
+              The active nibble glows; the inactive one dims.
+              That's the whole hex lesson, encoded in layout.
+            </DCPostIt>
+            <DCPostIt id="note5" x={0} y={0} width={260}>
+              <b>Heatmap = personalized hint.</b><br/><br/>
+              Profile shows error frequency per bit position × per mode.
+              Players see at a glance: "I always miss bit-32 in addition."
+              Use this to seed the next run's questions if you want.
+            </DCPostIt>
+            <DCPostIt id="note6" x={0} y={0} width={260}>
+              <b>Flutter implementation hints.</b><br/><br/>
+              Font: <code>JetBrains Mono</code>. Keep <code>FontFeature.tabularFigures()</code> on all numerics.
+              Use a single <code>BoxShadow</code> stack for the green-glow tokens; reuse via theme extension.
+              CRT scanlines: a <code>CustomPainter</code> with <code>BlendMode.multiply</code> over each scaffold.
+            </DCPostIt>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

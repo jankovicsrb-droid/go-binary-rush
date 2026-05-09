@@ -1,0 +1,127 @@
+GO BINARY RUSH — TERMINAL REDESIGN
+====================================
+
+Mobile portrait · Flutter target · jedinstveni vizuelni jezik kroz sve ekrane.
+Otvori `Go Binary Rush.html` u browseru — design canvas sa svim ekranima.
+
+
+ŠTA JE NOVO U DIZAJNU
+---------------------
+
+• BIT WEIGHTS LADDER (128 64 32 16 8 4 2 1) iznad svakog bit reda
+  Najveći edukativni "ahaa". Aktivna težina svetli zeleno; bit koji
+  trenutno toggluješ svetli amber. Suptilno — ne udara po ekranu.
+
+• LIVE DECIMAL PREVIEW (8 + 0 + 2 + 1 = 11) ispod bitova
+  Tikuje u realnom vremenu dok flipuješ. Igrač vidi kako matematika
+  radi, ne mora da je pamti.
+
+• ASCII FEEDBACK umesto modala
+  [ OK ] ✓ +10 PTS · ×5  →  inline u mestu input-a, auto-advance 0.4s.
+  Greška: [ MISS ] ✗ STREAK ×0  +  diff hint koji bit je bio swap-ovan.
+
+• HEX NIBBLE BRACKETS
+  8-bit binary podeljen u HIGH/LOW dashed grupe. Aktivna nibble glow,
+  neaktivna dim. Cela hex lekcija je u layout-u.
+
+• HEATMAP GREŠAKA  (Profile)
+  Mreža: bit pozicija × mod. Igrač vidi "ja uvek promašim bit-32 u
+  Addition-u". Možeš ovaj signal koristiti da seed-uješ sledeći run.
+
+• CRT SLOJ
+  Scanlines + vignette + faint phosphor glow. Suptilan; ne smeta čitanju.
+  U Flutteru: CustomPainter sa BlendMode.multiply preko Scaffolda.
+
+
+15 EKRANA, 3 SEKCIJE
+---------------------
+
+01 CORE
+  • Home / mode select   — sa "welcome back" bannerom, streak, tier badge
+  • Reference            — powers of 2, hex map, XOR truth table
+  • Profile              — stats, sparkline run history, heatmap grešaka
+
+02 GAME MODES
+  • MATCH (dec → bin)    — bit weights + live decimal preview
+  • MATCH · correct      — ASCII feedback + auto-advance
+  • MATCH · miss         — diff hint, swap-ovani bitovi crveno
+  • REVERSE (bin → dec)  — keypad input, weights kao podsetnik
+  • ADDITION             — column-style sa carry markerima (⤴ 1)
+  • XOR                  — sa inline truth-table hint karticom
+  • SPEED BURST          — timer ring, queue preview, recent answer trail
+  • HEX MATCH            — nibble brackets + hex keypad
+  • DAILY                — 10-Q grid sa po-modu označavanjem
+
+03 META
+  • Run Summary          — final score, timeline, tier progress, "+ NEW BEST"
+  • Achievements         — 8 progress-tracked, ASCII glyphs
+  • Leaderboard          — daily / weekly / all-time tabs, "you" istaknut
+
+
+FLUTTER IMPLEMENTACIJA — KLJUČNI TOKENI
+----------------------------------------
+
+Font:
+  JetBrains Mono (Google Fonts). Sve numericke vrednosti:
+    style: TextStyle(
+      fontFeatures: [FontFeature.tabularFigures()],
+    )
+
+Boje (kao ThemeExtension):
+  bg:        Color(0xFF000000)
+  g0:        Color(0xFF0A1A0A)   // deepest dim
+  g1:        Color(0xFF163B1F)   // off
+  g2:        Color(0xFF2A7A3A)   // dim text
+  g3:        Color(0xFF4ECF6A)   // base text
+  g4:        Color(0xFF7DFF97)   // bright
+  g5:        Color(0xFFB8FFC7)   // hot
+  amber:     Color(0xFFFFB547)   // warning / errors
+  red:       Color(0xFFFF4D4D)
+  cyan:      Color(0xFF4DD6FF)
+
+Glow tokeni (BoxShadow stack):
+  glowSm = [BoxShadow(color: g4 @ 45%, blurRadius: 4)]
+  glowMd = [
+    BoxShadow(color: g4 @ 55%, blurRadius: 10),
+    BoxShadow(color: g3 @ 25%, blurRadius: 22),
+  ]
+  glowLg = jače, za target broj i hot stanja
+
+CRT scanline overlay:
+  Stack iznad svakog Scaffolda.
+  CustomPaint koji crta horizontalne linije svake 4 piksela na
+  rgba(0,30,10,0.28), blendMode: multiply.
+  Plus radial gradient za vignette.
+
+Tipografija (sve uppercase za labele):
+  kicker:  10sp, letterSpacing 0.22em, color g2
+  title:   13sp, letterSpacing 0.18em, color g3 + glowSm
+  big:     64sp bold, color g5 + glowLg  (target broj)
+  hud-v:   16sp 600, color g4 + glowSm   (HUD vrednosti)
+
+
+KAKO IGRAČ UČI (suptilno)
+-------------------------
+
+1. Vidi target broj (npr. 11)
+2. Tapne bit → bit weights ladder pokaže "ovo je 4"
+3. Live preview pokaže "8 + 0 + 2 + 1 = 11"
+4. Confirm → ASCII OK, auto-advance
+5. Posle 5 runova, profil heatmap pokaže gde najviše greši
+6. Reference cheatsheet je uvek 1 tap dalje za fallback
+
+Igrač nikad ne vidi "tutorial". Sistem ga uči kroz pokušaj.
+
+
+FILES
+-----
+
+Go Binary Rush.html        — entry, otvori u browseru
+terminal.css               — boje, font, statusbar, hud, dugmad
+components.css             — bit, weights, keypad, heatmap, dock, achievement
+atoms.jsx                  — Phone, AppBar, Hud, Bit, BitRow, BitWeights, Pips, TimerRing, Dock
+screens-core.jsx           — Home, Reference, Profile
+screens-game.jsx           — Match (3 stanja), Reverse, Addition, XOR
+screens-modes.jsx          — Speed Burst, Hex Match, Daily
+screens-meta.jsx           — Miss, Run Summary, Achievements, Leaderboard
+design-canvas.jsx          — host za side-by-side prikaz
