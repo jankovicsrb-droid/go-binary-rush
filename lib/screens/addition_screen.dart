@@ -28,6 +28,8 @@ class _AdditionScreenState extends State<AdditionScreen>
   List<int> _bitsB = [];
   bool _solved = false;
   bool _loaded = false;
+  bool _hintOn = false;
+  bool _hintUsed = false;
   double _flashOpacity = 0.0;
   int _lapSolved = 0;
   int _lastEarned = 0;
@@ -127,6 +129,8 @@ class _AdditionScreenState extends State<AdditionScreen>
       _bitsA = List.filled(gen.currentBits, 0);
       _bitsB = List.filled(gen.currentBits, 0);
       _solved = false;
+      _hintOn = false;
+      _hintUsed = false;
       _lapSolved = (_lapSolved + 1) % _lapSize;
     });
   }
@@ -185,7 +189,9 @@ class _AdditionScreenState extends State<AdditionScreen>
                   value: valB,
                   onToggle: (i) => _toggle(_bitsB, i, (b) => _bitsB = b),
                 ),
-                const SizedBox(height: 36),
+                const SizedBox(height: 20),
+                _hintArea(),
+                const SizedBox(height: 16),
                 _feedback(),
                 const Spacer(),
               ],
@@ -217,11 +223,13 @@ class _AdditionScreenState extends State<AdditionScreen>
             Text(label,
                 style: AppText.kicker(color: AppColors.g2)
                     .copyWith(letterSpacing: 3)),
-            const SizedBox(width: 12),
-            Text('= $value',
-                style: AppText.mono(
-                    size: 18,
-                    color: _solved ? AppColors.g4 : AppColors.g2)),
+            if (_hintOn || _solved) ...[
+              const SizedBox(width: 12),
+              Text('= $value',
+                  style: AppText.mono(
+                      size: 18,
+                      color: _solved ? AppColors.g4 : AppColors.g2)),
+            ],
           ],
         ),
         const SizedBox(height: 8),
@@ -232,6 +240,25 @@ class _AdditionScreenState extends State<AdditionScreen>
           glowing: _solved,
         ),
       ],
+    );
+  }
+
+  Widget _hintArea() {
+    if (_solved || _hintOn) return const SizedBox.shrink();
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _hintOn = true;
+          if (!_hintUsed) {
+            _hintUsed = true;
+            _scoreEngine!.onHint();
+          }
+        });
+      },
+      child: Text(
+        '[ HINT  ·  −2 ]',
+        style: AppText.kicker(color: AppColors.amber).copyWith(letterSpacing: 3),
+      ),
     );
   }
 
