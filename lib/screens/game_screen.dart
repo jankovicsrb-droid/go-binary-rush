@@ -23,6 +23,8 @@ class _GameScreenState extends State<GameScreen>
   List<int> _bits = [];
   bool _solved = false;
   bool _loaded = false;
+  bool _hintOn = false;
+  bool _hintUsed = false;
   int? _lastToggled;
   double _flashOpacity = 0.0;
 
@@ -108,6 +110,8 @@ class _GameScreenState extends State<GameScreen>
       _target = gen.next();
       _bits = List.filled(gen.currentBits, 0);
       _solved = false;
+      _hintOn = false;
+      _hintUsed = false;
       _lastToggled = null;
     });
   }
@@ -160,7 +164,7 @@ class _GameScreenState extends State<GameScreen>
                   glowing: _solved,
                 ),
                 const SizedBox(height: 16),
-                _livePreview(),
+                _hintArea(),
                 const SizedBox(height: 32),
                 _feedback(),
                 const Spacer(),
@@ -209,6 +213,26 @@ class _GameScreenState extends State<GameScreen>
           ),
         );
       }),
+    );
+  }
+
+  Widget _hintArea() {
+    if (_solved) return _livePreview();
+    if (_hintOn) return _livePreview();
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _hintOn = true;
+          if (!_hintUsed) {
+            _hintUsed = true;
+            _scoreEngine!.onHint();
+          }
+        });
+      },
+      child: Text(
+        '[ HINT  ·  −2 ]',
+        style: AppText.kicker(color: AppColors.amber).copyWith(letterSpacing: 3),
+      ),
     );
   }
 

@@ -24,4 +24,8 @@ class ScoreEngine {
       _prefs.setInt(_keyHighScore, highScore);
     }
   }
+
+  void onHint() {
+    score = (score - 2).clamp(0, 999999);
+  }
 }
