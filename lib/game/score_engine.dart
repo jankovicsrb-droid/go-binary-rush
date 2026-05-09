@@ -24,6 +24,9 @@ class ScoreEngine {
       highScore = score;
       _prefs.setInt(_keyHighScore, highScore);
     }
+    _prefs.setInt('total_correct', (_prefs.getInt('total_correct') ?? 0) + 1);
+    final bestStreak = _prefs.getInt('best_streak_ever') ?? 0;
+    if (streak > bestStreak) _prefs.setInt('best_streak_ever', streak);
     return earned;
   }
 
