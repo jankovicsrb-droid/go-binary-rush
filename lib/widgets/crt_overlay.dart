@@ -25,9 +25,8 @@ class _CrtPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // Scanlines — horizontal line every 4px
     final linePaint = Paint()
-      ..color = const Color(0x1A001E0A)
-      ..strokeWidth = 1.0
-      ..blendMode = BlendMode.multiply;
+      ..color = const Color(0x1A000000)
+      ..strokeWidth = 1.0;
 
     for (double y = 0; y < size.height; y += 4) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
@@ -40,13 +39,12 @@ class _CrtPainter extends CustomPainter {
         center: Alignment.center,
         radius: 1.1,
         colors: [
-          Colors.transparent,
-          const Color(0x55000000),
-          const Color(0xAA000000),
+          const Color(0x00000000),
+          const Color(0x44000000),
+          const Color(0x99000000),
         ],
         stops: const [0.5, 0.82, 1.0],
-      ).createShader(rect)
-      ..blendMode = BlendMode.multiply;
+      ).createShader(rect);
 
     canvas.drawRect(rect, vignettePaint);
   }
