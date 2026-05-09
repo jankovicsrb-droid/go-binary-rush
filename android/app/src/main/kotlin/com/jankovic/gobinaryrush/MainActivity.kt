@@ -1,4 +1,4 @@
-package com.example.binary_game
+package com.jankovic.gobinaryrush
 
 import io.flutter.embedding.android.FlutterActivity
 
