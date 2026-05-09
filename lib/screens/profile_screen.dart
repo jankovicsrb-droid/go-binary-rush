@@ -41,6 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'XOR':         prefs.getInt('xor_high_score') ?? 0,
         'SPEED BURST': prefs.getInt('speed_match_high_score') ?? 0,
         'HEX MATCH':   prefs.getInt('hex_high_score') ?? 0,
+        'HEX WORD':    prefs.getInt('hex_word_high_score') ?? 0,
       };
       _loaded = true;
     });

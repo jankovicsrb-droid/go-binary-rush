@@ -4,6 +4,7 @@ import 'addition_screen.dart';
 import 'daily_challenge_screen.dart';
 import 'game_screen.dart';
 import 'hex_screen.dart';
+import 'hex_word_screen.dart';
 import 'reverse_screen.dart';
 import 'speed_burst_screen.dart';
 import 'xor_screen.dart';
@@ -35,7 +36,8 @@ class _MenuScreenState extends State<MenuScreen> {
         'addition':prefs.getInt('addition_high_score') ?? 0,
         'xor':     prefs.getInt('xor_high_score') ?? 0,
         'speed':   prefs.getInt('speed_match_high_score') ?? 0,
-        'hex':     prefs.getInt('hex_high_score') ?? 0,
+        'hex':      prefs.getInt('hex_high_score') ?? 0,
+        'hex_word': prefs.getInt('hex_word_high_score') ?? 0,
       };
       _tier = (prefs.getInt('match_current_tier') ?? 0) + 1;
     });
@@ -104,7 +106,12 @@ class _MenuScreenState extends State<MenuScreen> {
             onTap: () => _push(const HexScreen()),
           ),
           _ModeItem(
-            index: 7, name: 'DAILY', sub: '10 questions · daily reset',
+            index: 7, name: 'HEX WORD', sub: 'ascii hex → type the word',
+            best: _bestScores['hex_word'],
+            onTap: () => _push(const HexWordScreen()),
+          ),
+          _ModeItem(
+            index: 8, name: 'DAILY', sub: '10 questions · daily reset',
             best: null,
             onTap: () => _push(const DailyChallengeScreen()),
           ),

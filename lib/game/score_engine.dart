@@ -33,4 +33,8 @@ class ScoreEngine {
   void onHint() {
     score = (score - 2).clamp(0, 999999);
   }
+
+  void onWrongLetter() {
+    score = (score - 1).clamp(0, 999999);
+  }
 }
