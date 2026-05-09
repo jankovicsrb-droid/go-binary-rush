@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../game/score_engine.dart';
 import '../game/word_list.dart';
 import '../widgets/game_pips.dart';
@@ -17,12 +18,14 @@ class HexWordScreen extends StatefulWidget {
 class _HexWordScreenState extends State<HexWordScreen>
     with SingleTickerProviderStateMixin {
   ScoreEngine? _score;
+  SharedPreferences? _prefs;
 
   List<String> _pool = [];
   int _poolIdx = 0;
   String _word = '';
   int _revealed = 0;
   bool _solved = false;
+  bool _wrongThisWord = false;
 
   int _lapSolved = 0;
   int _lastEarned = 0;
@@ -58,10 +61,16 @@ class _HexWordScreenState extends State<HexWordScreen>
   }
 
   Future<void> _init() async {
-    final score = await ScoreEngine.create(mode: 'hex_word');
+    final results = await Future.wait([
+      ScoreEngine.create(mode: 'hex_word'),
+      SharedPreferences.getInstance(),
+    ]);
+    final score = results[0] as ScoreEngine;
+    final prefs = results[1] as SharedPreferences;
     final pool = List<String>.from(kWordList)..shuffle(Random());
     setState(() {
       _score = score;
+      _prefs = prefs;
       _pool = pool;
       _poolIdx = 0;
     });
@@ -76,6 +85,7 @@ class _HexWordScreenState extends State<HexWordScreen>
       _revealed = 0;
       _solved = false;
       _wrongFlash = false;
+      _wrongThisWord = false;
     });
   }
 
@@ -94,7 +104,10 @@ class _HexWordScreenState extends State<HexWordScreen>
       _score!.onWrongLetter();
       HapticFeedback.lightImpact();
       _wrongTimer?.cancel();
-      setState(() => _wrongFlash = true);
+      setState(() {
+        _wrongFlash = true;
+        _wrongThisWord = true;
+      });
       _wrongTimer = Timer(const Duration(milliseconds: 300), () {
         if (mounted) setState(() => _wrongFlash = false);
       });
@@ -111,6 +124,18 @@ class _HexWordScreenState extends State<HexWordScreen>
     });
     _advanceTimer?.cancel();
     _advanceTimer = Timer(const Duration(milliseconds: 700), _next);
+    _saveProgress();
+  }
+
+  void _saveProgress() {
+    final p = _prefs;
+    if (p == null) return;
+    final total = (p.getInt('hex_word_total') ?? 0) + 1;
+    p.setInt('hex_word_total', total);
+    if (!_wrongThisWord) {
+      final perfect = (p.getInt('hex_word_perfect_count') ?? 0) + 1;
+      p.setInt('hex_word_perfect_count', perfect);
+    }
   }
 
   void _next() {

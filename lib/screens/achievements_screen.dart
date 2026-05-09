@@ -45,11 +45,14 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    final totalCorrect  = prefs.getInt('total_correct') ?? 0;
-    final bestStreak    = prefs.getInt('best_streak_ever') ?? 0;
-    final matchTier     = (prefs.getInt('match_current_tier') ?? 0) + 1;
-    final speedBest     = prefs.getInt('speed_match_high_score') ?? 0;
-    final dailyStreak   = prefs.getInt('daily_streak') ?? 0;
+    final totalCorrect   = prefs.getInt('total_correct') ?? 0;
+    final bestStreak     = prefs.getInt('best_streak_ever') ?? 0;
+    final matchTier      = (prefs.getInt('match_current_tier') ?? 0) + 1;
+    final speedBest      = prefs.getInt('speed_match_high_score') ?? 0;
+    final dailyStreak    = prefs.getInt('daily_streak') ?? 0;
+    final hwTotal        = prefs.getInt('hex_word_total') ?? 0;
+    final hwPerfect      = prefs.getInt('hex_word_perfect_count') ?? 0;
+    final hwSpeedBest    = prefs.getInt('speed_hexWord_high_score') ?? 0;
 
     setState(() {
       _achievements = [
@@ -107,6 +110,31 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           glyph: '◈', name: 'DAILY ×30',
           sub: '30-day daily challenge streak',
           goal: 30, progress: dailyStreak,
+        ),
+        _Achievement(
+          glyph: '⌨', name: 'FIRST WORD',
+          sub: 'solve your first HEX WORD',
+          goal: 1, progress: hwTotal,
+        ),
+        _Achievement(
+          glyph: '⌨', name: 'WORDSMITH',
+          sub: 'solve 10 HEX WORD puzzles',
+          goal: 10, progress: hwTotal,
+        ),
+        _Achievement(
+          glyph: '⌨', name: 'LEXICON',
+          sub: 'solve 50 HEX WORD puzzles',
+          goal: 50, progress: hwTotal,
+        ),
+        _Achievement(
+          glyph: '⌨', name: 'CLEAN READ',
+          sub: 'solve a word with no wrong letters',
+          goal: 1, progress: hwPerfect,
+        ),
+        _Achievement(
+          glyph: '⚡', name: 'HEX SPEED',
+          sub: 'solve 10+ words in Speed Burst HEX WORD',
+          goal: 10, progress: hwSpeedBest,
         ),
       ];
       _loaded = true;

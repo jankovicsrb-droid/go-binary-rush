@@ -238,6 +238,10 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
       _solved++;
     });
     _flashController.forward(from: 0);
+    if (_mode == _SBMode.hexWord) {
+      final total = (_prefs?.getInt('hex_word_total') ?? 0) + 1;
+      _prefs?.setInt('hex_word_total', total);
+    }
     Future.delayed(const Duration(milliseconds: 450), () {
       if (mounted && !_finished) _loadQuestion();
     });
