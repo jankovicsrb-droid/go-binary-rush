@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../game/question_generator.dart';
 import '../game/score_engine.dart';
 import '../widgets/bit_row.dart';
+import '../widgets/game_hud.dart';
+import '../widgets/game_pips.dart';
 import '../theme.dart';
 
 const _green = AppColors.g4;
@@ -26,6 +29,11 @@ class _AdditionScreenState extends State<AdditionScreen>
   bool _solved = false;
   bool _loaded = false;
   double _flashOpacity = 0.0;
+  int _lapSolved = 0;
+  int _lastEarned = 0;
+  Timer? _advanceTimer;
+
+  static const int _lapSize = GamePips.lapSize;
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnim;
@@ -67,6 +75,7 @@ class _AdditionScreenState extends State<AdditionScreen>
 
   @override
   void dispose() {
+    _advanceTimer?.cancel();
     _pulseController.dispose();
     super.dispose();
   }
@@ -85,23 +94,30 @@ class _AdditionScreenState extends State<AdditionScreen>
     newBits[index] = newBits[index] == 0 ? 1 : 0;
     update(newBits);
     setState(() {});
-    if (_computeValue(_bitsA) + _computeValue(_bitsB) == _target) _triggerSuccess();
+    if (_computeValue(_bitsA) + _computeValue(_bitsB) == _target) {
+      _triggerSuccess();
+    }
   }
 
   void _triggerSuccess() {
     HapticFeedback.mediumImpact();
-    _scoreEngine!.onCorrect();
+    final earned = _scoreEngine!.onCorrect();
     setState(() {
       _solved = true;
       _flashOpacity = 1.0;
+      _lastEarned = earned;
     });
     _pulseController.repeat(reverse: true);
     Future.delayed(const Duration(milliseconds: 120), () {
       if (mounted) setState(() => _flashOpacity = 0.0);
     });
+    _advanceTimer = Timer(const Duration(milliseconds: 700), () {
+      if (mounted) _next();
+    });
   }
 
   void _next() {
+    _advanceTimer?.cancel();
     _pulseController.stop();
     _pulseController.reset();
     final gen = _generator!;
@@ -111,6 +127,7 @@ class _AdditionScreenState extends State<AdditionScreen>
       _bitsA = List.filled(gen.currentBits, 0);
       _bitsB = List.filled(gen.currentBits, 0);
       _solved = false;
+      _lapSolved = (_lapSolved + 1) % _lapSize;
     });
   }
 
@@ -134,10 +151,8 @@ class _AdditionScreenState extends State<AdditionScreen>
         backgroundColor: Colors.black,
         elevation: 0,
         iconTheme: const IconThemeData(color: _dimGreen),
-        title: const Text(
-          'GO BINARY RUSH',
-          style: TextStyle(color: _green, fontSize: 15, letterSpacing: 4),
-        ),
+        title: const Text('GO BINARY RUSH',
+            style: TextStyle(color: _green, fontSize: 15, letterSpacing: 4)),
         centerTitle: false,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -151,8 +166,10 @@ class _AdditionScreenState extends State<AdditionScreen>
             child: Column(
               children: [
                 const SizedBox(height: 16),
-                _hud(gen, score),
+                GameHud(gen: gen, score: score),
                 const Spacer(),
+                GamePips(lapSolved: _lapSolved, solved: _solved),
+                const SizedBox(height: 20),
                 _targetDisplay(),
                 const SizedBox(height: 28),
                 _rowSection(
@@ -178,7 +195,7 @@ class _AdditionScreenState extends State<AdditionScreen>
             child: AnimatedOpacity(
               opacity: _flashOpacity,
               duration: const Duration(milliseconds: 60),
-              child: Container(color: const Color(0x2200FF41)),
+              child: Container(color: AppColors.g3.withValues(alpha: 0.13)),
             ),
           ),
         ],
@@ -198,13 +215,13 @@ class _AdditionScreenState extends State<AdditionScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(label,
-                style: const TextStyle(
-                    fontSize: 11, color: _dimGreen, letterSpacing: 3)),
+                style: AppText.kicker(color: AppColors.g2)
+                    .copyWith(letterSpacing: 3)),
             const SizedBox(width: 12),
             Text('= $value',
-                style: TextStyle(
-                    fontSize: 18,
-                    color: _solved ? _green : _dimGreen)),
+                style: AppText.mono(
+                    size: 18,
+                    color: _solved ? AppColors.g4 : AppColors.g2)),
           ],
         ),
         const SizedBox(height: 8),
@@ -221,95 +238,41 @@ class _AdditionScreenState extends State<AdditionScreen>
   Widget _targetDisplay() {
     return Column(
       children: [
-        const Text(
-          'TARGET',
-          style: TextStyle(fontSize: 11, color: _dimGreen, letterSpacing: 5),
-        ),
+        Text('TARGET',
+            style: AppText.kicker(color: AppColors.g2).copyWith(letterSpacing: 5)),
         const SizedBox(height: 4),
-        Text(
-          '$_target',
-          style: const TextStyle(
-            fontSize: 64,
-            color: _green,
-            fontWeight: FontWeight.bold,
-            height: 1.0,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _hud(QuestionGenerator gen, ScoreEngine score) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _tierStat(gen),
-        _stat('SCORE', '${score.score}'),
-        _stat('STREAK', '×${score.streak}'),
-        _stat('BEST', '${score.highScore}'),
-      ],
-    );
-  }
-
-  Widget _tierStat(QuestionGenerator gen) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const Text('TIER',
-            style: TextStyle(fontSize: 9, color: _dimGreen, letterSpacing: 2)),
-        const SizedBox(height: 2),
-        Text('T${gen.currentTier}',
-            style: const TextStyle(fontSize: 14, color: _green, letterSpacing: 1)),
-        Text('${gen.tierSolvedCount}/${gen.tierCap}',
-            style: const TextStyle(fontSize: 8, color: _dimGreen, letterSpacing: 1)),
-      ],
-    );
-  }
-
-  Widget _stat(String label, String value) {
-    return Column(
-      children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 9, color: _dimGreen, letterSpacing: 2)),
-        const SizedBox(height: 2),
-        Text(value,
-            style: const TextStyle(
-                fontSize: 14, color: _green, letterSpacing: 1)),
+        Text('$_target', style: AppText.bigTarget()),
       ],
     );
   }
 
   Widget _feedback() {
-    if (_solved) {
-      return Column(
-        children: [
-          ScaleTransition(
-            scale: _scaleAnim,
-            child: FadeTransition(
-              opacity: _pulseAnim,
-              child: const Text(
-                'CORRECT',
-                style: TextStyle(fontSize: 26, color: _green, letterSpacing: 8),
-              ),
+    if (!_solved) return const SizedBox.shrink();
+    return Column(
+      children: [
+        ScaleTransition(
+          scale: _scaleAnim,
+          child: FadeTransition(
+            opacity: _pulseAnim,
+            child: Text(
+              '[ OK ]  ✓  +$_lastEarned PTS  ·  ×${_scoreEngine!.streak}',
+              style: AppText.mono(size: 13, color: AppColors.g4),
             ),
           ),
-          const SizedBox(height: 24),
-          GestureDetector(
-            onTap: _next,
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
-              decoration: BoxDecoration(border: Border.all(color: _green)),
-              child: const Text(
-                'NEXT  →',
-                style: TextStyle(fontSize: 15, color: _green, letterSpacing: 5),
-              ),
-            ),
+        ),
+        const SizedBox(height: 20),
+        GestureDetector(
+          onTap: _next,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
+            decoration: BoxDecoration(border: Border.all(color: AppColors.g2)),
+            child: Text('NEXT  →',
+                style: AppText.mono(
+                    size: 13, color: AppColors.g3, weight: FontWeight.w500)
+                    .copyWith(letterSpacing: 4)),
           ),
-        ],
-      );
-    }
-    return const SizedBox.shrink();
+        ),
+      ],
+    );
   }
 }

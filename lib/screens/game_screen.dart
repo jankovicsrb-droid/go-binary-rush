@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import '../game/question_generator.dart';
 import '../game/score_engine.dart';
 import '../widgets/bit_row.dart';
+import '../widgets/game_hud.dart';
+import '../widgets/game_pips.dart';
 import '../theme.dart';
 
 const _green = AppColors.g4;
@@ -164,9 +166,9 @@ class _GameScreenState extends State<GameScreen>
             child: Column(
               children: [
                 const SizedBox(height: 16),
-                _hud(gen, score),
+                GameHud(gen: gen, score: score),
                 const Spacer(),
-                _pips(),
+                GamePips(lapSolved: _lapSolved, solved: _solved),
                 const SizedBox(height: 20),
                 _targetDisplay(),
                 const SizedBox(height: 32),
@@ -195,49 +197,6 @@ class _GameScreenState extends State<GameScreen>
           ),
         ],
       ),
-    );
-  }
-
-  // _lapSolved = number of questions already completed in this lap (0..lapSize-1)
-  // current question is always at index _lapSolved
-  Widget _pips() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(_lapSize, (i) {
-        final isPast = i < _lapSolved;
-        final isCurrent = i == _lapSolved;
-        Color borderColor;
-        Color fillColor;
-        List<BoxShadow>? glow;
-        if (isPast) {
-          fillColor = AppColors.g3;
-          borderColor = AppColors.g3;
-          glow = AppGlow.sm;
-        } else if (isCurrent && _solved) {
-          fillColor = AppColors.g4;
-          borderColor = AppColors.g4;
-          glow = AppGlow.sm;
-        } else if (isCurrent) {
-          fillColor = Colors.transparent;
-          borderColor = AppColors.g2;
-          glow = null;
-        } else {
-          fillColor = Colors.transparent;
-          borderColor = AppColors.g1;
-          glow = null;
-        }
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 3),
-          width: 7,
-          height: 7,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: fillColor,
-            border: Border.all(color: borderColor, width: 1),
-            boxShadow: glow,
-          ),
-        );
-      }),
     );
   }
 
@@ -323,42 +282,6 @@ class _GameScreenState extends State<GameScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: parts,
-    );
-  }
-
-  Widget _hud(QuestionGenerator gen, ScoreEngine score) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _tierStat(gen),
-        _stat('SCORE', '${score.score}'),
-        _stat('STREAK', '×${score.streak}'),
-        _stat('BEST', '${score.highScore}'),
-      ],
-    );
-  }
-
-  Widget _tierStat(QuestionGenerator gen) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text('TIER', style: AppText.kicker()),
-        const SizedBox(height: 2),
-        Text('T${gen.currentTier}', style: AppText.hudValue()),
-        Text('${gen.tierSolvedCount}/${gen.tierCap}',
-            style: AppText.mono(size: 9, color: AppColors.g2)),
-      ],
-    );
-  }
-
-  Widget _stat(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(label, style: AppText.kicker()),
-        const SizedBox(height: 2),
-        Text(value, style: AppText.hudValue()),
-      ],
     );
   }
 

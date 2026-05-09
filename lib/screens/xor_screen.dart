@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../game/question_generator.dart';
 import '../game/score_engine.dart';
 import '../widgets/bit_row.dart';
+import '../widgets/game_hud.dart';
+import '../widgets/game_pips.dart';
 import '../theme.dart';
 
 const _green = AppColors.g4;
@@ -30,6 +33,11 @@ class _XorScreenState extends State<XorScreen>
   bool _solved = false;
   bool _loaded = false;
   double _flashOpacity = 0.0;
+  int _lapSolved = 0;
+  int _lastEarned = 0;
+  Timer? _advanceTimer;
+
+  static const int _lapSize = GamePips.lapSize;
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnim;
@@ -68,12 +76,11 @@ class _XorScreenState extends State<XorScreen>
 
   @override
   void dispose() {
+    _advanceTimer?.cancel();
     _pulseController.dispose();
     super.dispose();
   }
 
-  // Generate A randomly, derive B so that A XOR B = xorTarget.
-  // xorTarget comes from the generator (no-repeat tracked).
   void _newQuestion() {
     final gen = _generator!;
     final xorTarget = gen.next();
@@ -111,20 +118,26 @@ class _XorScreenState extends State<XorScreen>
 
   void _triggerSuccess() {
     HapticFeedback.mediumImpact();
-    _scoreEngine!.onCorrect();
+    final earned = _scoreEngine!.onCorrect();
     setState(() {
       _solved = true;
       _flashOpacity = 1.0;
+      _lastEarned = earned;
     });
     _pulseController.repeat(reverse: true);
     Future.delayed(const Duration(milliseconds: 120), () {
       if (mounted) setState(() => _flashOpacity = 0.0);
     });
+    _advanceTimer = Timer(const Duration(milliseconds: 700), () {
+      if (mounted) _next();
+    });
   }
 
   void _next() {
+    _advanceTimer?.cancel();
     _pulseController.stop();
     _pulseController.reset();
+    setState(() => _lapSolved = (_lapSolved + 1) % _lapSize);
     _newQuestion();
   }
 
@@ -147,10 +160,8 @@ class _XorScreenState extends State<XorScreen>
         backgroundColor: Colors.black,
         elevation: 0,
         iconTheme: const IconThemeData(color: _dimGreen),
-        title: const Text(
-          'GO BINARY RUSH',
-          style: TextStyle(color: _green, fontSize: 15, letterSpacing: 4),
-        ),
+        title: const Text('GO BINARY RUSH',
+            style: TextStyle(color: _green, fontSize: 15, letterSpacing: 4)),
         centerTitle: false,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -164,9 +175,13 @@ class _XorScreenState extends State<XorScreen>
             child: Column(
               children: [
                 const SizedBox(height: 16),
-                _hud(gen, score),
+                GameHud(gen: gen, score: score),
                 const Spacer(),
-                _modeHeader(),
+                GamePips(lapSolved: _lapSolved, solved: _solved),
+                const SizedBox(height: 20),
+                Text('A  ⊕  B  =  C',
+                    style: AppText.kicker(color: AppColors.g2)
+                        .copyWith(letterSpacing: 4, fontSize: 13)),
                 const SizedBox(height: 28),
                 _fixedRow(label: 'A', bits: _bitsA),
                 const SizedBox(height: 8),
@@ -183,18 +198,11 @@ class _XorScreenState extends State<XorScreen>
             child: AnimatedOpacity(
               opacity: _flashOpacity,
               duration: const Duration(milliseconds: 60),
-              child: Container(color: const Color(0x2200FF41)),
+              child: Container(color: AppColors.g3.withValues(alpha: 0.13)),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _modeHeader() {
-    return const Text(
-      'A  ⊕  B  =  C',
-      style: TextStyle(fontSize: 13, color: _dimGreen, letterSpacing: 4),
     );
   }
 
@@ -204,16 +212,10 @@ class _XorScreenState extends State<XorScreen>
       children: [
         SizedBox(
           width: 20,
-          child: Text(label,
-              style: const TextStyle(
-                  fontSize: 11, color: _dimGreen, letterSpacing: 2)),
+          child: Text(label, style: AppText.kicker(color: AppColors.g2)),
         ),
         const SizedBox(width: 8),
-        BitRow(
-          bits: bits,
-          onToggle: (_) {},
-          enabled: false,
-        ),
+        BitRow(bits: bits, onToggle: (_) {}, enabled: false),
       ],
     );
   }
@@ -237,11 +239,9 @@ class _XorScreenState extends State<XorScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(
+            SizedBox(
               width: 20,
-              child: Text('C',
-                  style: TextStyle(
-                      fontSize: 11, color: _dimGreen, letterSpacing: 2)),
+              child: Text('C', style: AppText.kicker(color: AppColors.g2)),
             ),
             const SizedBox(width: 8),
             BitRow(
@@ -255,84 +255,41 @@ class _XorScreenState extends State<XorScreen>
         const SizedBox(height: 8),
         Text(
           '= $valC',
-          style: TextStyle(
-              fontSize: 18, color: _solved ? _green : _dimGreen),
+          style: AppText.mono(
+              size: 18,
+              color: _solved ? AppColors.g4 : AppColors.g2),
         ),
       ],
     );
   }
 
-  Widget _hud(QuestionGenerator gen, ScoreEngine score) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _tierStat(gen),
-        _stat('SCORE', '${score.score}'),
-        _stat('STREAK', '×${score.streak}'),
-        _stat('BEST', '${score.highScore}'),
-      ],
-    );
-  }
-
-  Widget _tierStat(QuestionGenerator gen) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const Text('TIER',
-            style: TextStyle(fontSize: 9, color: _dimGreen, letterSpacing: 2)),
-        const SizedBox(height: 2),
-        Text('T${gen.currentTier}',
-            style: const TextStyle(fontSize: 14, color: _green, letterSpacing: 1)),
-        Text('${gen.tierSolvedCount}/${gen.tierCap}',
-            style: const TextStyle(fontSize: 8, color: _dimGreen, letterSpacing: 1)),
-      ],
-    );
-  }
-
-  Widget _stat(String label, String value) {
-    return Column(
-      children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 9, color: _dimGreen, letterSpacing: 2)),
-        const SizedBox(height: 2),
-        Text(value,
-            style: const TextStyle(
-                fontSize: 14, color: _green, letterSpacing: 1)),
-      ],
-    );
-  }
-
   Widget _feedback() {
-    if (_solved) {
-      return Column(
-        children: [
-          ScaleTransition(
-            scale: _scaleAnim,
-            child: FadeTransition(
-              opacity: _pulseAnim,
-              child: const Text(
-                'CORRECT',
-                style: TextStyle(fontSize: 26, color: _green, letterSpacing: 8),
-              ),
+    if (!_solved) return const SizedBox.shrink();
+    return Column(
+      children: [
+        ScaleTransition(
+          scale: _scaleAnim,
+          child: FadeTransition(
+            opacity: _pulseAnim,
+            child: Text(
+              '[ OK ]  ✓  +$_lastEarned PTS  ·  ×${_scoreEngine!.streak}',
+              style: AppText.mono(size: 13, color: AppColors.g4),
             ),
           ),
-          const SizedBox(height: 24),
-          GestureDetector(
-            onTap: _next,
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
-              decoration: BoxDecoration(border: Border.all(color: _green)),
-              child: const Text(
-                'NEXT  →',
-                style: TextStyle(fontSize: 15, color: _green, letterSpacing: 5),
-              ),
-            ),
+        ),
+        const SizedBox(height: 20),
+        GestureDetector(
+          onTap: _next,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
+            decoration: BoxDecoration(border: Border.all(color: AppColors.g2)),
+            child: Text('NEXT  →',
+                style: AppText.mono(
+                    size: 13, color: AppColors.g3, weight: FontWeight.w500)
+                    .copyWith(letterSpacing: 4)),
           ),
-        ],
-      );
-    }
-    return const SizedBox.shrink();
+        ),
+      ],
+    );
   }
 }
