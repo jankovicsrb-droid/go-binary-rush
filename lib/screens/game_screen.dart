@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../game/question_generator.dart';
@@ -27,6 +28,11 @@ class _GameScreenState extends State<GameScreen>
   bool _hintUsed = false;
   int? _lastToggled;
   double _flashOpacity = 0.0;
+  int _lapSolved = 0;
+  int _lastEarned = 0;
+  Timer? _advanceTimer;
+
+  static const int _lapSize = 10;
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnim;
@@ -66,6 +72,7 @@ class _GameScreenState extends State<GameScreen>
 
   @override
   void dispose() {
+    _advanceTimer?.cancel();
     _pulseController.dispose();
     super.dispose();
   }
@@ -91,18 +98,23 @@ class _GameScreenState extends State<GameScreen>
 
   void _triggerSuccess() {
     HapticFeedback.mediumImpact();
-    _scoreEngine!.onCorrect();
+    final earned = _scoreEngine!.onCorrect();
     setState(() {
       _solved = true;
       _flashOpacity = 1.0;
+      _lastEarned = earned;
     });
     _pulseController.repeat(reverse: true);
     Future.delayed(const Duration(milliseconds: 120), () {
       if (mounted) setState(() => _flashOpacity = 0.0);
     });
+    _advanceTimer = Timer(const Duration(milliseconds: 700), () {
+      if (mounted) _next();
+    });
   }
 
   void _next() {
+    _advanceTimer?.cancel();
     _pulseController.stop();
     _pulseController.reset();
     final gen = _generator!;
@@ -113,6 +125,7 @@ class _GameScreenState extends State<GameScreen>
       _hintOn = false;
       _hintUsed = false;
       _lastToggled = null;
+      _lapSolved = (_lapSolved + 1) % _lapSize;
     });
   }
 
@@ -153,6 +166,8 @@ class _GameScreenState extends State<GameScreen>
                 const SizedBox(height: 16),
                 _hud(gen, score),
                 const Spacer(),
+                _pips(),
+                const SizedBox(height: 20),
                 _targetDisplay(),
                 const SizedBox(height: 32),
                 _weightsRow(),
@@ -180,6 +195,49 @@ class _GameScreenState extends State<GameScreen>
           ),
         ],
       ),
+    );
+  }
+
+  // _lapSolved = number of questions already completed in this lap (0..lapSize-1)
+  // current question is always at index _lapSolved
+  Widget _pips() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(_lapSize, (i) {
+        final isPast = i < _lapSolved;
+        final isCurrent = i == _lapSolved;
+        Color borderColor;
+        Color fillColor;
+        List<BoxShadow>? glow;
+        if (isPast) {
+          fillColor = AppColors.g3;
+          borderColor = AppColors.g3;
+          glow = AppGlow.sm;
+        } else if (isCurrent && _solved) {
+          fillColor = AppColors.g4;
+          borderColor = AppColors.g4;
+          glow = AppGlow.sm;
+        } else if (isCurrent) {
+          fillColor = Colors.transparent;
+          borderColor = AppColors.g2;
+          glow = null;
+        } else {
+          fillColor = Colors.transparent;
+          borderColor = AppColors.g1;
+          glow = null;
+        }
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: fillColor,
+            border: Border.all(color: borderColor, width: 1),
+            boxShadow: glow,
+          ),
+        );
+      }),
     );
   }
 
@@ -317,27 +375,31 @@ class _GameScreenState extends State<GameScreen>
 
   Widget _feedback() {
     if (_solved) {
+      final score = _scoreEngine!;
       return Column(
         children: [
           ScaleTransition(
             scale: _scaleAnim,
             child: FadeTransition(
               opacity: _pulseAnim,
-              child: Text('CORRECT',
-                  style: AppText.label(color: AppColors.g5)
-                      .copyWith(fontSize: 26, letterSpacing: 8)),
+              child: Text(
+                '[ OK ]  ✓  +$_lastEarned PTS  ·  ×${score.streak}',
+                style: AppText.mono(size: 13, color: AppColors.g4),
+              ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           GestureDetector(
             onTap: _next,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
               decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.g3),
-                  boxShadow: AppGlow.sm),
+                border: Border.all(color: AppColors.g2),
+              ),
               child: Text('NEXT  →',
-                  style: AppText.label().copyWith(letterSpacing: 5)),
+                  style: AppText.mono(size: 13, color: AppColors.g3,
+                      weight: FontWeight.w500)
+                      .copyWith(letterSpacing: 4)),
             ),
           ),
         ],

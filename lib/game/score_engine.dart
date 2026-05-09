@@ -16,13 +16,15 @@ class ScoreEngine {
     return ScoreEngine._(prefs, mode);
   }
 
-  void onCorrect() {
+  int onCorrect() {
     streak++;
-    score += 10 + (streak - 1) * 5;
+    final earned = 10 + (streak - 1) * 5;
+    score += earned;
     if (score > highScore) {
       highScore = score;
       _prefs.setInt(_keyHighScore, highScore);
     }
+    return earned;
   }
 
   void onHint() {
