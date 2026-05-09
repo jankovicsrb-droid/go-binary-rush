@@ -3,8 +3,24 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../game/word_list.dart';
 import '../widgets/bit_row.dart';
 import '../theme.dart';
+
+enum _QMode { match, reverse, hexWord }
+
+const _schedule = [
+  (_QMode.match,   4),
+  (_QMode.match,   4),
+  (_QMode.reverse, 4),
+  (_QMode.match,   5),
+  (_QMode.reverse, 5),
+  (_QMode.match,   6),
+  (_QMode.hexWord, 0),
+  (_QMode.hexWord, 0),
+  (_QMode.match,   7),
+  (_QMode.match,   8),
+];
 
 class DailyChallengeScreen extends StatefulWidget {
   const DailyChallengeScreen({super.key});
@@ -16,14 +32,18 @@ class DailyChallengeScreen extends StatefulWidget {
 class _DailyChallengeScreenState extends State<DailyChallengeScreen>
     with SingleTickerProviderStateMixin {
   static const int _total = 10;
-  // Bit width per question — progressively harder
-  static const _bitsPerQ = [4, 4, 4, 5, 5, 5, 6, 6, 7, 8];
+
+  static const _keyRows = [
+    ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+    ['Z', 'X', 'C', 'V', 'B', 'N', 'M'],
+  ];
 
   SharedPreferences? _prefs;
   String _dateKey = '';
-  List<int> _questions = [];
+  List<int> _targets = [];
+  List<String> _words = [];
   int _current = 0;
-  List<int> _bits = [];
   List<bool?> _results = List.filled(_total, null);
   bool _solved = false;
   bool _done = false;
@@ -31,11 +51,29 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
   bool _loaded = false;
   int _score = 0;
   int _bestScore = 0;
-
   Timer? _advanceTimer;
+
+  // Match state
+  List<int> _bits = [];
+
+  // Reverse state
+  String _revEntry = '';
+  bool _revWrong = false;
+  Timer? _revWrongTimer;
+
+  // HexWord state
+  int _hwRevealed = 0;
+  bool _hwWrong = false;
+  Timer? _hwWrongTimer;
+
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
   late Animation<double> _scaleAnim;
+
+  _QMode get _mode => _schedule[_current].$1;
+  int get _qBits => _schedule[_current].$2;
+  int get _target => _targets[_current];
+  String get _word => _words[_current];
 
   @override
   void initState() {
@@ -52,6 +90,8 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
   @override
   void dispose() {
     _advanceTimer?.cancel();
+    _revWrongTimer?.cancel();
+    _hwWrongTimer?.cancel();
     _pulseCtrl.dispose();
     super.dispose();
   }
@@ -63,14 +103,23 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
         '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
     final seed = now.year * 10000 + now.month * 100 + now.day;
 
-    // Generate deterministic questions: top bit always set for clear bit-width
-    final questions = <int>[];
+    final shortWords = kWordList.where((w) => w.length <= 6).toList();
+    final targets = <int>[];
+    final words = <String>[];
+
     for (int i = 0; i < _total; i++) {
-      final bits = _bitsPerQ[i];
-      final min = 1 << (bits - 1);
-      final max = (1 << bits) - 1;
       final rng = Random(seed + i * 7919);
-      questions.add(min + rng.nextInt(max - min + 1));
+      final s = _schedule[i];
+      if (s.$1 == _QMode.hexWord) {
+        targets.add(0);
+        words.add(shortWords[rng.nextInt(shortWords.length)]);
+      } else {
+        final b = s.$2;
+        final min = 1 << (b - 1);
+        final max = (1 << b) - 1;
+        targets.add(min + rng.nextInt(max - min + 1));
+        words.add('');
+      }
     }
 
     final alreadyDone = prefs.getBool('daily_${dateKey}_done') ?? false;
@@ -79,18 +128,33 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
     setState(() {
       _prefs = prefs;
       _dateKey = dateKey;
-      _questions = questions;
-      _bits = List.filled(_bitsPerQ[0], 0);
+      _targets = targets;
+      _words = words;
       _results = List.filled(_total, null);
       _bestScore = best;
       _score = alreadyDone ? best : 0;
       _alreadyDone = alreadyDone;
       _loaded = true;
     });
+
+    if (!alreadyDone) _setupQuestion();
   }
 
-  int get _currentBits => _bitsPerQ[_current];
-  int get _target => _questions[_current];
+  void _setupQuestion() {
+    final s = _schedule[_current];
+    setState(() {
+      _solved = false;
+      _revEntry = '';
+      _revWrong = false;
+      _hwRevealed = 0;
+      _hwWrong = false;
+      if (s.$1 == _QMode.match) {
+        _bits = List.filled(s.$2, 0);
+      }
+    });
+  }
+
+  // ── Match ──────────────────────────────────────────────────────
 
   int _val(List<int> bits) {
     int v = 0;
@@ -100,12 +164,61 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
     return v;
   }
 
+  List<int> _toBits(int value, int n) =>
+      List.generate(n, (i) => (value >> (n - 1 - i)) & 1);
+
   void _toggleBit(int index) {
     if (_solved) return;
     final nb = List<int>.from(_bits)..[index] ^= 1;
     setState(() => _bits = nb);
     if (_val(nb) == _target) _triggerSuccess();
   }
+
+  // ── Reverse ────────────────────────────────────────────────────
+
+  void _tapDigit(String d) {
+    if (_solved || _revWrong) return;
+    if (d == '⌫') {
+      if (_revEntry.isNotEmpty) {
+        setState(
+            () => _revEntry = _revEntry.substring(0, _revEntry.length - 1));
+      }
+      return;
+    }
+    if (d.isEmpty) return;
+    final next = _revEntry + d;
+    setState(() => _revEntry = next);
+    final val = int.tryParse(next);
+    if (val == _target) {
+      _triggerSuccess();
+    } else if (next.length >= _target.toString().length) {
+      _revWrongTimer?.cancel();
+      setState(() => _revWrong = true);
+      _revWrongTimer = Timer(const Duration(milliseconds: 400), () {
+        if (mounted) setState(() { _revWrong = false; _revEntry = ''; });
+      });
+    }
+  }
+
+  // ── HexWord ────────────────────────────────────────────────────
+
+  void _tapLetter(String letter) {
+    if (_solved || _word.isEmpty) return;
+    if (letter == _word[_hwRevealed].toUpperCase()) {
+      HapticFeedback.selectionClick();
+      setState(() => _hwRevealed++);
+      if (_hwRevealed == _word.length) _triggerSuccess();
+    } else {
+      HapticFeedback.lightImpact();
+      _hwWrongTimer?.cancel();
+      setState(() => _hwWrong = true);
+      _hwWrongTimer = Timer(const Duration(milliseconds: 300), () {
+        if (mounted) setState(() => _hwWrong = false);
+      });
+    }
+  }
+
+  // ── Success / flow ─────────────────────────────────────────────
 
   void _triggerSuccess() {
     HapticFeedback.mediumImpact();
@@ -129,11 +242,8 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
       _finish();
       return;
     }
-    setState(() {
-      _current++;
-      _bits = List.filled(_bitsPerQ[_current], 0);
-      _solved = false;
-    });
+    setState(() => _current++);
+    _setupQuestion();
   }
 
   void _finish() {
@@ -189,51 +299,12 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
     );
   }
 
-  // ── Already done ───────────────────────────────────────────────
+  Widget _buildGame() =>
+      _mode == _QMode.hexWord ? _buildHexWordGame() : _buildBinaryGame();
 
-  Widget _buildAlreadyDone() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('TODAY\'S RESULT', style: AppText.kicker()),
-          const SizedBox(height: 8),
-          Container(height: 1, color: AppColors.g1),
-          const SizedBox(height: 32),
-          Text(_rank(_bestScore),
-              style: AppText.mono(
-                  size: 72, color: AppColors.g4, weight: FontWeight.w700)),
-          const SizedBox(height: 4),
-          Text(_rankLabel(_bestScore),
-              style: AppText.mono(size: 11, color: AppColors.g2)),
-          const SizedBox(height: 12),
-          Text('$_bestScore / ${_total * 10}',
-              style: AppText.hudValue(color: AppColors.g3)
-                  .copyWith(fontSize: 22)),
-          const SizedBox(height: 48),
-          Text('NEXT CHALLENGE', style: AppText.kicker()),
-          const SizedBox(height: 8),
-          const _CountdownTimer(),
-          const SizedBox(height: 48),
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-              decoration:
-                  BoxDecoration(border: Border.all(color: AppColors.g2)),
-              child: Text('BACK TO MENU', style: AppText.label()),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // ── Binary game (match + reverse) ─────────────────────────────
 
-  // ── Game ───────────────────────────────────────────────────────
-
-  Widget _buildGame() {
+  Widget _buildBinaryGame() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -241,11 +312,20 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
           const SizedBox(height: 16),
           _progressGrid(),
           const Spacer(),
-          Text(
-            '$_currentBits-BIT  ·  Q${_current + 1} OF $_total',
-            style: AppText.kicker(color: AppColors.g2),
-          ),
-          const SizedBox(height: 10),
+          _modeLabel(),
+          const SizedBox(height: 14),
+          if (_mode == _QMode.match) _matchContent(),
+          if (_mode == _QMode.reverse) _reverseContent(),
+          const SizedBox(height: 20),
+          SizedBox(height: 90, child: _binaryFeedback()),
+          const Spacer(),
+        ],
+      ),
+    );
+  }
+
+  Widget _matchContent() => Column(
+        children: [
           Text('$_target', style: AppText.bigTarget()),
           const SizedBox(height: 36),
           BitRow(
@@ -253,13 +333,237 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
               onToggle: _toggleBit,
               enabled: !_solved,
               glowing: _solved),
-          const SizedBox(height: 28),
-          SizedBox(height: 90, child: _feedback()),
-          const Spacer(),
         ],
-      ),
+      );
+
+  Widget _reverseContent() {
+    final bits = _toBits(_target, _qBits);
+    return Column(
+      children: [
+        BitRow(bits: bits, onToggle: (_) {}, enabled: false, glowing: _solved),
+        const SizedBox(height: 24),
+        _revDisplay(),
+        const SizedBox(height: 20),
+        if (!_solved) _numPad(),
+      ],
     );
   }
+
+  Widget _revDisplay() {
+    final text = _revEntry.isEmpty ? '?' : _revEntry;
+    final color = _revWrong
+        ? AppColors.red
+        : _revEntry.isEmpty
+            ? AppColors.g1
+            : AppColors.g4;
+    return Text(text,
+        style: AppText.mono(size: 52, color: color, weight: FontWeight.w700));
+  }
+
+  Widget _numPad() {
+    const rows = [
+      ['1', '2', '3'],
+      ['4', '5', '6'],
+      ['7', '8', '9'],
+      ['⌫', '0', ''],
+    ];
+    return Column(
+      children: rows
+          .map((row) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: row
+                      .map((d) => d.isEmpty
+                          ? const SizedBox(width: 82)
+                          : GestureDetector(
+                              onTap: () => _tapDigit(d),
+                              child: Container(
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 6),
+                                width: 70,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                    border: Border.all(color: AppColors.g2)),
+                                alignment: Alignment.center,
+                                child: Text(d,
+                                    style: AppText.mono(
+                                        size: 18, color: AppColors.g3)),
+                              ),
+                            ))
+                      .toList(),
+                ),
+              ))
+          .toList(),
+    );
+  }
+
+  Widget _binaryFeedback() {
+    if (!_solved) return const SizedBox.shrink();
+    final isLast = _current + 1 >= _total;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ScaleTransition(
+          scale: _scaleAnim,
+          child: FadeTransition(
+            opacity: _pulseAnim,
+            child: Text('CORRECT',
+                style:
+                    AppText.label().copyWith(fontSize: 20, letterSpacing: 8)),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _nextButton(isLast: isLast),
+      ],
+    );
+  }
+
+  // ── HexWord game ───────────────────────────────────────────────
+
+  Widget _buildHexWordGame() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
+              _progressGrid(),
+              const SizedBox(height: 16),
+              _modeLabel(),
+              const SizedBox(height: 20),
+              _hwHexDisplay(),
+              const SizedBox(height: 18),
+              _hwLetterBoxes(),
+              const SizedBox(height: 12),
+              SizedBox(
+                  height: 20,
+                  child: _solved
+                      ? Text('CORRECT',
+                          style: AppText.mono(size: 13, color: AppColors.g4))
+                      : null),
+            ],
+          ),
+        ),
+        const Spacer(),
+        _hwKeyboard(),
+        const SizedBox(height: 10),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 180),
+          child: _solved
+              ? _nextButton(
+                  key: const ValueKey('next'),
+                  isLast: _current + 1 >= _total)
+              : const SizedBox(height: 46, key: ValueKey('ph')),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _hwHexDisplay() {
+    final pairs = _word.codeUnits
+        .map((c) => c.toRadixString(16).padLeft(2, '0').toUpperCase())
+        .toList();
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 10,
+      runSpacing: 6,
+      children: pairs
+          .map((p) => Text(p,
+              style: AppText.mono(
+                  size: 20, color: AppColors.amber, weight: FontWeight.w600)))
+          .toList(),
+    );
+  }
+
+  Widget _hwLetterBoxes() {
+    if (_word.isEmpty) return const SizedBox.shrink();
+    return LayoutBuilder(builder: (ctx, constraints) {
+      final boxSlot =
+          (constraints.maxWidth / _word.length).clamp(0.0, 50.0);
+      final boxW = (boxSlot - 4.0).clamp(0.0, 46.0);
+      final fontSize = (boxW * 0.45).clamp(10.0, 18.0);
+
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(_word.length, (i) {
+          final isRev = i < _hwRevealed;
+          final isCur = i == _hwRevealed && !_solved;
+          final letter = isRev ? _word[i].toUpperCase() : '';
+          final borderColor = isRev
+              ? AppColors.g3
+              : (isCur && _hwWrong)
+                  ? AppColors.red
+                  : isCur
+                      ? AppColors.g2
+                      : AppColors.g1;
+          final textColor = isRev
+              ? AppColors.g4
+              : (isCur && _hwWrong)
+                  ? AppColors.red
+                  : isCur
+                      ? AppColors.g2
+                      : AppColors.g1;
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            width: boxW,
+            height: 40,
+            decoration: BoxDecoration(
+              border:
+                  Border.all(color: borderColor, width: isCur ? 1.5 : 1),
+              boxShadow: isRev ? AppGlow.sm : null,
+            ),
+            alignment: Alignment.center,
+            child: Text(letter,
+                style: AppText.mono(
+                    size: fontSize,
+                    color: textColor,
+                    weight: FontWeight.w700)),
+          );
+        }),
+      );
+    });
+  }
+
+  Widget _hwKeyboard() {
+    return Column(
+      children: _keyRows
+          .map((row) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: row
+                      .map((l) => GestureDetector(
+                            onTap: () => _tapLetter(l),
+                            child: Container(
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 2),
+                              width: 30,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: _solved
+                                          ? AppColors.g1
+                                          : AppColors.g2)),
+                              alignment: Alignment.center,
+                              child: Text(l,
+                                  style: AppText.mono(
+                                      size: 12,
+                                      color: _solved
+                                          ? AppColors.g1
+                                          : AppColors.g3)),
+                            ),
+                          ))
+                      .toList(),
+                ),
+              ))
+          .toList(),
+    );
+  }
+
+  // ── Shared widgets ─────────────────────────────────────────────
 
   Widget _progressGrid() {
     return Row(
@@ -275,8 +579,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
         if (done && !isCurrent) {
           borderColor = AppColors.g3;
           bgColor = AppColors.g0;
-          inner = Text('✓',
-              style: AppText.mono(size: 9, color: AppColors.g3));
+          inner = Text('✓', style: AppText.mono(size: 9, color: AppColors.g3));
         } else if (isCurrent && _solved) {
           borderColor = AppColors.g4;
           bgColor = AppColors.g0;
@@ -286,13 +589,13 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
         } else if (isCurrent) {
           borderColor = AppColors.g3;
           bgColor = Colors.transparent;
-          inner = Text('${i + 1}',
-              style: AppText.mono(size: 9, color: AppColors.g3));
+          inner =
+              Text('${i + 1}', style: AppText.mono(size: 9, color: AppColors.g3));
         } else {
           borderColor = AppColors.g1;
           bgColor = Colors.transparent;
-          inner = Text('${i + 1}',
-              style: AppText.mono(size: 8, color: AppColors.g1));
+          inner =
+              Text('${i + 1}', style: AppText.mono(size: 8, color: AppColors.g1));
         }
 
         return Container(
@@ -311,34 +614,77 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
     );
   }
 
-  Widget _feedback() {
-    if (!_solved) return const SizedBox.shrink();
-    final isLast = _current + 1 >= _total;
+  Widget _modeLabel() {
+    final label = switch (_mode) {
+      _QMode.match   => 'MATCH',
+      _QMode.reverse => 'REVERSE',
+      _QMode.hexWord => 'HEX WORD',
+    };
+    final sub =
+        _mode != _QMode.hexWord ? '$_qBits-BIT  ·  ' : '';
     return Column(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        ScaleTransition(
-          scale: _scaleAnim,
-          child: FadeTransition(
-            opacity: _pulseAnim,
-            child: Text('CORRECT',
-                style: AppText.label()
-                    .copyWith(fontSize: 20, letterSpacing: 8)),
-          ),
-        ),
-        const SizedBox(height: 12),
-        GestureDetector(
-          onTap: _next,
-          child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-            decoration:
-                BoxDecoration(border: Border.all(color: AppColors.g2)),
-            child: Text(isLast ? 'FINISH →' : 'NEXT →',
-                style: AppText.label()),
-          ),
-        ),
+        Text(label,
+            style: AppText.kicker(color: AppColors.g3)
+                .copyWith(letterSpacing: 3)),
+        Text('${sub}Q${_current + 1} OF $_total',
+            style: AppText.kicker(color: AppColors.g1)),
       ],
+    );
+  }
+
+  Widget _nextButton({bool isLast = false, Key? key}) {
+    return GestureDetector(
+      key: key,
+      onTap: _next,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+        decoration: BoxDecoration(border: Border.all(color: AppColors.g2)),
+        child:
+            Text(isLast ? 'FINISH →' : 'NEXT →', style: AppText.label()),
+      ),
+    );
+  }
+
+  // ── Already done ───────────────────────────────────────────────
+
+  Widget _buildAlreadyDone() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("TODAY'S RESULT", style: AppText.kicker()),
+          const SizedBox(height: 8),
+          Container(height: 1, color: AppColors.g1),
+          const SizedBox(height: 32),
+          Text(_rank(_bestScore),
+              style: AppText.mono(
+                  size: 72, color: AppColors.g4, weight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          Text(_rankLabel(_bestScore),
+              style: AppText.mono(size: 11, color: AppColors.g2)),
+          const SizedBox(height: 12),
+          Text('$_bestScore / ${_total * 10}',
+              style:
+                  AppText.hudValue(color: AppColors.g3).copyWith(fontSize: 22)),
+          const SizedBox(height: 48),
+          Text('NEXT CHALLENGE', style: AppText.kicker()),
+          const SizedBox(height: 8),
+          const _CountdownTimer(),
+          const SizedBox(height: 48),
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+              decoration:
+                  BoxDecoration(border: Border.all(color: AppColors.g2)),
+              child: Text('BACK TO MENU', style: AppText.label()),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -380,8 +726,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
                             .copyWith(fontSize: 20)),
                     if (isNewBest)
                       Text('NEW BEST',
-                          style: AppText.mono(
-                              size: 9, color: AppColors.g4)),
+                          style: AppText.mono(size: 9, color: AppColors.g4)),
                   ],
                 ),
               ),
@@ -406,10 +751,16 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
   }
 
   Widget _resultsGrid() {
+    const modeChar = {
+      _QMode.match:   'M',
+      _QMode.reverse: 'R',
+      _QMode.hexWord: 'W',
+    };
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: List.generate(_total, (i) {
+        final s = _schedule[i];
         return Container(
           width: 42,
           height: 42,
@@ -427,7 +778,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
                       size: 13,
                       color: AppColors.g4,
                       weight: FontWeight.w700)),
-              Text('${_bitsPerQ[i]}b',
+              Text(modeChar[s.$1]!,
                   style: AppText.mono(size: 7, color: AppColors.g2)),
             ],
           ),
@@ -453,7 +804,8 @@ class _CountdownTimerState extends State<_CountdownTimer> {
   void initState() {
     super.initState();
     _time = _format();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+    _timer = Timer.periodic(
+        const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _time = _format());
     });
   }
