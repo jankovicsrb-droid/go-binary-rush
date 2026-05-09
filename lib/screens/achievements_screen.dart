@@ -49,6 +49,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     final bestStreak    = prefs.getInt('best_streak_ever') ?? 0;
     final matchTier     = (prefs.getInt('match_current_tier') ?? 0) + 1;
     final speedBest     = prefs.getInt('speed_match_high_score') ?? 0;
+    final dailyStreak   = prefs.getInt('daily_streak') ?? 0;
 
     setState(() {
       _achievements = [
@@ -91,6 +92,21 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           glyph: '⚡', name: 'SPEED DEMON',
           sub: 'score 100+ in Speed Burst',
           goal: 100, progress: speedBest,
+        ),
+        _Achievement(
+          glyph: '◈', name: 'DAILY ×3',
+          sub: '3 consecutive daily challenges',
+          goal: 3, progress: dailyStreak,
+        ),
+        _Achievement(
+          glyph: '◈', name: 'DAILY ×7',
+          sub: 'complete daily 7 days in a row',
+          goal: 7, progress: dailyStreak,
+        ),
+        _Achievement(
+          glyph: '◈', name: 'DAILY ×30',
+          sub: '30-day daily challenge streak',
+          goal: 30, progress: dailyStreak,
         ),
       ];
       _loaded = true;

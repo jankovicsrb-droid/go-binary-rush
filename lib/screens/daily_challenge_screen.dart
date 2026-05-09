@@ -51,6 +51,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
   bool _loaded = false;
   int _score = 0;
   int _bestScore = 0;
+  int _dailyStreak = 0;
   Timer? _advanceTimer;
 
   // Match state
@@ -124,6 +125,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
 
     final alreadyDone = prefs.getBool('daily_${dateKey}_done') ?? false;
     final best = prefs.getInt('daily_${dateKey}_best') ?? 0;
+    final dailyStreak = prefs.getInt('daily_streak') ?? 0;
 
     setState(() {
       _prefs = prefs;
@@ -134,6 +136,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
       _bestScore = best;
       _score = alreadyDone ? best : 0;
       _alreadyDone = alreadyDone;
+      _dailyStreak = dailyStreak;
       _loaded = true;
     });
 
@@ -252,7 +255,25 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
       _prefs!.setInt('daily_${_dateKey}_best', _bestScore);
     }
     _prefs!.setBool('daily_${_dateKey}_done', true);
-    setState(() => _done = true);
+
+    final now = DateTime.now();
+    final yest = now.subtract(const Duration(days: 1));
+    final yesterdayKey =
+        '${yest.year}${yest.month.toString().padLeft(2, '0')}${yest.day.toString().padLeft(2, '0')}';
+    final lastDate = _prefs!.getString('daily_last_date') ?? '';
+    int streak = _prefs!.getInt('daily_streak') ?? 0;
+    if (lastDate == yesterdayKey || lastDate.isEmpty) {
+      streak++;
+    } else if (lastDate != _dateKey) {
+      streak = 1;
+    }
+    _prefs!.setInt('daily_streak', streak);
+    _prefs!.setString('daily_last_date', _dateKey);
+
+    setState(() {
+      _done = true;
+      _dailyStreak = streak;
+    });
   }
 
   static String _rank(int score) {
@@ -668,6 +689,9 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
           Text('$_bestScore / ${_total * 10}',
               style:
                   AppText.hudValue(color: AppColors.g3).copyWith(fontSize: 22)),
+          const SizedBox(height: 8),
+          Text('DAILY STREAK  ×$_dailyStreak',
+              style: AppText.mono(size: 13, color: AppColors.amber)),
           const SizedBox(height: 48),
           Text('NEXT CHALLENGE', style: AppText.kicker()),
           const SizedBox(height: 8),
@@ -727,6 +751,10 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
                     if (isNewBest)
                       Text('NEW BEST',
                           style: AppText.mono(size: 9, color: AppColors.g4)),
+                    const SizedBox(height: 4),
+                    Text('DAILY STREAK  ×$_dailyStreak',
+                        style:
+                            AppText.mono(size: 11, color: AppColors.amber)),
                   ],
                 ),
               ),

@@ -13,6 +13,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _totalCorrect = 0;
   int _bestStreak = 0;
   int _tier = 1;
+  int _dailyStreak = 0;
   Map<String, int> _bests = {};
   bool _loaded = false;
 
@@ -34,6 +35,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _totalCorrect = prefs.getInt('total_correct') ?? 0;
       _bestStreak   = prefs.getInt('best_streak_ever') ?? 0;
       _tier         = (prefs.getInt('match_current_tier') ?? 0) + 1;
+      _dailyStreak  = prefs.getInt('daily_streak') ?? 0;
       _bests = {
         'MATCH':       prefs.getInt('match_high_score') ?? 0,
         'REVERSE':     prefs.getInt('reverse_high_score') ?? 0,
@@ -71,6 +73,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _divider('TIER PROGRESS  ·  MATCH'),
                 const SizedBox(height: 14),
                 _tierRow(),
+                const SizedBox(height: 28),
+                _divider('DAILY'),
+                const SizedBox(height: 14),
+                _statRow('DAILY STREAK', _dailyStreak > 0 ? '×$_dailyStreak' : '—'),
                 const SizedBox(height: 28),
                 _divider('BEST SCORES'),
                 const SizedBox(height: 14),
