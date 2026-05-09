@@ -6,7 +6,6 @@ import '../widgets/bit_row.dart';
 import '../theme.dart';
 
 const _green = AppColors.g4;
-const _dimGreen = AppColors.g2;
 const _muteGreen = AppColors.g1;
 
 class GameScreen extends StatefulWidget {
@@ -24,7 +23,7 @@ class _GameScreenState extends State<GameScreen>
   List<int> _bits = [];
   bool _solved = false;
   bool _loaded = false;
-  bool _hintOn = false;
+  int? _lastToggled;
   double _flashOpacity = 0.0;
 
   late AnimationController _pulseController;
@@ -81,7 +80,10 @@ class _GameScreenState extends State<GameScreen>
     if (_solved) return;
     final newBits = List<int>.from(_bits);
     newBits[index] = newBits[index] == 0 ? 1 : 0;
-    setState(() => _bits = newBits);
+    setState(() {
+      _bits = newBits;
+      _lastToggled = index;
+    });
     if (_computeValue(newBits) == _target) _triggerSuccess();
   }
 
@@ -106,7 +108,7 @@ class _GameScreenState extends State<GameScreen>
       _target = gen.next();
       _bits = List.filled(gen.currentBits, 0);
       _solved = false;
-      _hintOn = false;
+      _lastToggled = null;
     });
   }
 
@@ -119,7 +121,6 @@ class _GameScreenState extends State<GameScreen>
       );
     }
 
-    final currentValue = _computeValue(_bits);
     final score = _scoreEngine!;
     final gen = _generator!;
 
@@ -149,32 +150,18 @@ class _GameScreenState extends State<GameScreen>
                 _hud(gen, score),
                 const Spacer(),
                 _targetDisplay(),
-                const SizedBox(height: 44),
+                const SizedBox(height: 32),
+                _weightsRow(),
+                const SizedBox(height: 8),
                 BitRow(
                   bits: _bits,
                   onToggle: _toggleBit,
                   enabled: !_solved,
                   glowing: _solved,
                 ),
-                const SizedBox(height: 28),
-                GestureDetector(
-                  onTap: _solved ? null : () => setState(() => _hintOn = !_hintOn),
-                  child: _solved
-                      ? Text(
-                          '= $currentValue',
-                          style: const TextStyle(fontSize: 32, color: _green),
-                        )
-                      : _hintOn
-                          ? Text(
-                              '= $currentValue',
-                              style: const TextStyle(fontSize: 32, color: _dimGreen),
-                            )
-                          : const Text(
-                              '[ HINT ]',
-                              style: TextStyle(fontSize: 13, color: _dimGreen, letterSpacing: 3),
-                            ),
-                ),
-                const SizedBox(height: 44),
+                const SizedBox(height: 16),
+                _livePreview(),
+                const SizedBox(height: 32),
                 _feedback(),
                 const Spacer(),
               ],
@@ -184,11 +171,76 @@ class _GameScreenState extends State<GameScreen>
             child: AnimatedOpacity(
               opacity: _flashOpacity,
               duration: const Duration(milliseconds: 60),
-              child: Container(color: const Color(0x2200FF41)),
+              child: Container(color: AppColors.g3.withValues(alpha: 0.13)),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  double _tileWidth(int n) {
+    if (n <= 4) return 72;
+    if (n <= 5) return 64;
+    if (n <= 6) return 56;
+    if (n <= 7) return 50;
+    return 44;
+  }
+
+  Widget _weightsRow() {
+    final n = _bits.length;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(n, (i) {
+        final weight = 1 << (n - 1 - i);
+        final isOn = _bits[i] == 1;
+        final isLive = !_solved && _lastToggled == i;
+        final color = isLive
+            ? AppColors.amber
+            : isOn
+                ? AppColors.g4
+                : AppColors.g1;
+        return SizedBox(
+          width: _tileWidth(n),
+          child: Text(
+            '$weight',
+            textAlign: TextAlign.center,
+            style: AppText.mono(size: 10, color: color),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _livePreview() {
+    final n = _bits.length;
+    final parts = <Widget>[];
+    for (int i = 0; i < n; i++) {
+      final weight = 1 << (n - 1 - i);
+      final isOn = _bits[i] == 1;
+      if (i > 0) {
+        parts.add(Text(' + ',
+            style: AppText.mono(size: 11, color: AppColors.g1)));
+      }
+      parts.add(Text(
+        '${_bits[i]}·$weight',
+        style: AppText.mono(size: 11, color: isOn ? AppColors.g4 : AppColors.g1),
+      ));
+    }
+    final value = _computeValue(_bits);
+    final sumColor = _solved
+        ? AppColors.g5
+        : value == _target
+            ? AppColors.g4
+            : AppColors.g2;
+    parts.add(Text(' = ', style: AppText.mono(size: 11, color: AppColors.g1)));
+    parts.add(Text(
+      '$value',
+      style: AppText.mono(size: 14, color: sumColor, weight: FontWeight.w700),
+    ));
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: parts,
     );
   }
 
@@ -208,13 +260,11 @@ class _GameScreenState extends State<GameScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text('TIER',
-            style: TextStyle(fontSize: 9, color: _dimGreen, letterSpacing: 2)),
+        Text('TIER', style: AppText.kicker()),
         const SizedBox(height: 2),
-        Text('T${gen.currentTier}',
-            style: const TextStyle(fontSize: 14, color: _green, letterSpacing: 1)),
+        Text('T${gen.currentTier}', style: AppText.hudValue()),
         Text('${gen.tierSolvedCount}/${gen.tierCap}',
-            style: const TextStyle(fontSize: 8, color: _dimGreen, letterSpacing: 1)),
+            style: AppText.mono(size: 9, color: AppColors.g2)),
       ],
     );
   }
@@ -223,13 +273,9 @@ class _GameScreenState extends State<GameScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 9, color: _dimGreen, letterSpacing: 2)),
+        Text(label, style: AppText.kicker()),
         const SizedBox(height: 2),
-        Text(value,
-            style: const TextStyle(
-                fontSize: 14, color: _green, letterSpacing: 1)),
+        Text(value, style: AppText.hudValue()),
       ],
     );
   }
@@ -237,20 +283,10 @@ class _GameScreenState extends State<GameScreen>
   Widget _targetDisplay() {
     return Column(
       children: [
-        const Text(
-          'TARGET',
-          style: TextStyle(fontSize: 11, color: _dimGreen, letterSpacing: 5),
-        ),
+        Text('TARGET', style: AppText.kicker(color: AppColors.g2)
+            .copyWith(letterSpacing: 5)),
         const SizedBox(height: 8),
-        Text(
-          '$_target',
-          style: const TextStyle(
-            fontSize: 80,
-            color: _green,
-            fontWeight: FontWeight.bold,
-            height: 1.0,
-          ),
-        ),
+        Text('$_target', style: AppText.bigTarget()),
       ],
     );
   }
@@ -263,23 +299,21 @@ class _GameScreenState extends State<GameScreen>
             scale: _scaleAnim,
             child: FadeTransition(
               opacity: _pulseAnim,
-              child: const Text(
-                'CORRECT',
-                style: TextStyle(fontSize: 26, color: _green, letterSpacing: 8),
-              ),
+              child: Text('CORRECT',
+                  style: AppText.label(color: AppColors.g5)
+                      .copyWith(fontSize: 26, letterSpacing: 8)),
             ),
           ),
           const SizedBox(height: 24),
           GestureDetector(
             onTap: _next,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
-              decoration: BoxDecoration(border: Border.all(color: _green)),
-              child: const Text(
-                'NEXT  →',
-                style: TextStyle(fontSize: 15, color: _green, letterSpacing: 5),
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
+              decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.g3),
+                  boxShadow: AppGlow.sm),
+              child: Text('NEXT  →',
+                  style: AppText.label().copyWith(letterSpacing: 5)),
             ),
           ),
         ],
