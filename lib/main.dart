@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/main_shell.dart';
+import 'screens/name_entry_screen.dart';
 import 'theme.dart';
 import 'widgets/crt_overlay.dart';
 
@@ -17,7 +19,43 @@ class BinaryRushApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
       builder: (context, child) => CrtOverlay(child: child!),
-      home: const MainShell(),
+      home: const _AppRouter(),
     );
+  }
+}
+
+class _AppRouter extends StatefulWidget {
+  const _AppRouter();
+
+  @override
+  State<_AppRouter> createState() => _AppRouterState();
+}
+
+class _AppRouterState extends State<_AppRouter> {
+  bool _checked = false;
+  bool _needsName = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _check();
+  }
+
+  Future<void> _check() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString('player_name');
+    setState(() {
+      _needsName = name == null;
+      _checked = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_checked) {
+      return const Scaffold(
+          backgroundColor: Colors.black, body: SizedBox.shrink());
+    }
+    return _needsName ? const NameEntryScreen() : const MainShell();
   }
 }

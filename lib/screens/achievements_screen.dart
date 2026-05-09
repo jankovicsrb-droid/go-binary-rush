@@ -28,6 +28,7 @@ class AchievementsScreen extends StatefulWidget {
 }
 
 class _AchievementsScreenState extends State<AchievementsScreen> {
+  String _playerName = 'PLAYER';
   List<_Achievement> _achievements = [];
   bool _loaded = false;
 
@@ -45,6 +46,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
+    final playerName     = (prefs.getString('player_name') ?? 'PLAYER').toUpperCase();
     final totalCorrect   = prefs.getInt('total_correct') ?? 0;
     final bestStreak     = prefs.getInt('best_streak_ever') ?? 0;
     final matchTier      = (prefs.getInt('match_current_tier') ?? 0) + 1;
@@ -55,6 +57,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     final hwSpeedBest    = prefs.getInt('speed_hexWord_high_score') ?? 0;
 
     setState(() {
+      _playerName = playerName;
       _achievements = [
         _Achievement(
           glyph: '◉', name: 'FIRST BIT',
@@ -172,6 +175,20 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           : ListView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text('AGENT', style: AppText.kicker(color: AppColors.g2)),
+                    const SizedBox(width: 14),
+                    Text(_playerName,
+                        style: AppText.mono(
+                            size: 18,
+                            color: AppColors.g4,
+                            weight: FontWeight.w700)),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 _progressBar(unlocked, total),
                 const SizedBox(height: 24),
                 ..._achievements.map(_achItem),

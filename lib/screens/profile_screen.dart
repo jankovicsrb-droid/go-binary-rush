@@ -10,6 +10,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  String _playerName = 'PLAYER';
   int _totalCorrect = 0;
   int _bestStreak = 0;
   int _tier = 1;
@@ -32,6 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
+      _playerName   = (prefs.getString('player_name') ?? 'PLAYER').toUpperCase();
       _totalCorrect = prefs.getInt('total_correct') ?? 0;
       _bestStreak   = prefs.getInt('best_streak_ever') ?? 0;
       _tier         = (prefs.getInt('match_current_tier') ?? 0) + 1;
@@ -68,6 +70,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           : ListView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               children: [
+                _agentHeader(),
+                const SizedBox(height: 24),
+                Container(height: 1, color: AppColors.g1),
+                const SizedBox(height: 24),
                 _coreStats(),
                 const SizedBox(height: 28),
                 _divider('TIER PROGRESS  ·  MATCH'),
@@ -83,6 +89,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ..._bests.entries.map((e) => _statRow(e.key, e.value > 0 ? '${e.value}' : '—')),
               ],
             ),
+    );
+  }
+
+  Widget _agentHeader() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text('AGENT', style: AppText.kicker(color: AppColors.g2)),
+        const SizedBox(width: 14),
+        Text(_playerName,
+            style: AppText.mono(
+                size: 22, color: AppColors.g4, weight: FontWeight.w700)),
+      ],
     );
   }
 
