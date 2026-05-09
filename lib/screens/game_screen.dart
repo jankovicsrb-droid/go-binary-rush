@@ -172,8 +172,10 @@ class _GameScreenState extends State<GameScreen>
                 const SizedBox(height: 20),
                 _targetDisplay(),
                 const SizedBox(height: 32),
-                _weightsRow(),
-                const SizedBox(height: 8),
+                if (_hintOn || _solved) ...[
+                  _weightsRow(),
+                  const SizedBox(height: 8),
+                ],
                 BitRow(
                   bits: _bits,
                   onToggle: _toggleBit,

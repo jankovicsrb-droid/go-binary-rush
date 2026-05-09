@@ -254,7 +254,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
               enabled: !_solved,
               glowing: _solved),
           const SizedBox(height: 28),
-          SizedBox(height: 60, child: _feedback()),
+          SizedBox(height: 90, child: _feedback()),
           const Spacer(),
         ],
       ),

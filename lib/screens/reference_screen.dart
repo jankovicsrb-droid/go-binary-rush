@@ -5,6 +5,7 @@ import '../theme.dart';
 const _green = AppColors.g4;
 const _dimGreen = AppColors.g2;
 const _muteGreen = AppColors.g1;
+const _yellow = AppColors.amber;
 
 class ReferenceScreen extends StatelessWidget {
   const ReferenceScreen({super.key});
@@ -42,6 +43,14 @@ class ReferenceScreen extends StatelessWidget {
             _section('XOR TRUTH TABLE'),
             const SizedBox(height: 12),
             _xorTable(),
+            const SizedBox(height: 32),
+            _section('HEX WORD  ·  ASCII  a – z'),
+            const SizedBox(height: 12),
+            _asciiTable(),
+            const SizedBox(height: 8),
+            Text('hex pair  →  letter  (lowercase, UTF-8)',
+                style: TextStyle(
+                    fontSize: 9, color: _dimGreen, letterSpacing: 1)),
           ],
         ),
       ),
@@ -103,6 +112,31 @@ class ReferenceScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 13, color: _dimGreen)),
               Text('$i',
                   style: const TextStyle(fontSize: 15, color: _green)),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _asciiTable() {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: List.generate(26, (i) {
+        final code = 0x61 + i;
+        final hex = code.toRadixString(16).toUpperCase();
+        final char = String.fromCharCode(code);
+        return SizedBox(
+          width: 68,
+          child: Row(
+            children: [
+              Text(hex,
+                  style: TextStyle(
+                      fontSize: 13, color: _yellow, letterSpacing: 1)),
+              Text('  $char',
+                  style: TextStyle(
+                      fontSize: 13, color: _green, letterSpacing: 1)),
             ],
           ),
         );
