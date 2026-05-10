@@ -231,6 +231,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
     HapticFeedback.mediumImpact();
     _pulseCtrl.repeat(reverse: true);
     final newResults = List<bool?>.from(_results)..[_current] = true;
+    _prefs!.setInt('total_correct', (_prefs!.getInt('total_correct') ?? 0) + 1);
     setState(() {
       _score += 10;
       _solved = true;

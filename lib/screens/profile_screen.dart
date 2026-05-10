@@ -16,6 +16,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _tier = 1;
   int _dailyStreak = 0;
   Map<String, int> _bests = {};
+  Map<String, int> _speedBests = {};
   bool _loaded = false;
 
   @override
@@ -39,13 +40,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _tier         = (prefs.getInt('match_current_tier') ?? 0) + 1;
       _dailyStreak  = prefs.getInt('daily_streak') ?? 0;
       _bests = {
-        'MATCH':       prefs.getInt('match_high_score') ?? 0,
-        'REVERSE':     prefs.getInt('reverse_high_score') ?? 0,
-        'ADDITION':    prefs.getInt('addition_high_score') ?? 0,
-        'XOR':         prefs.getInt('xor_high_score') ?? 0,
-        'SPEED BURST': prefs.getInt('speed_match_high_score') ?? 0,
-        'HEX MATCH':   prefs.getInt('hex_high_score') ?? 0,
-        'HEX WORD':    prefs.getInt('hex_word_high_score') ?? 0,
+        'MATCH':    prefs.getInt('match_high_score') ?? 0,
+        'REVERSE':  prefs.getInt('reverse_high_score') ?? 0,
+        'ADDITION': prefs.getInt('addition_high_score') ?? 0,
+        'XOR':      prefs.getInt('xor_high_score') ?? 0,
+        'HEX MATCH':prefs.getInt('hex_high_score') ?? 0,
+        'HEX WORD': prefs.getInt('hex_word_high_score') ?? 0,
+      };
+      _speedBests = {
+        'MATCH':    prefs.getInt('speed_match_high_score') ?? 0,
+        'REVERSE':  prefs.getInt('speed_reverse_high_score') ?? 0,
+        'ADDITION': prefs.getInt('speed_addition_high_score') ?? 0,
+        'XOR':      prefs.getInt('speed_xor_high_score') ?? 0,
+        'HEX WORD': prefs.getInt('speed_hexWord_high_score') ?? 0,
       };
       _loaded = true;
     });
@@ -87,6 +94,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _divider('BEST SCORES'),
                 const SizedBox(height: 14),
                 ..._bests.entries.map((e) => _statRow(e.key, e.value > 0 ? '${e.value}' : '—')),
+                const SizedBox(height: 28),
+                _divider('SPEED BURST'),
+                const SizedBox(height: 14),
+                ..._speedBests.entries.map((e) => _statRow(e.key, e.value > 0 ? '${e.value}' : '—')),
               ],
             ),
     );
