@@ -13,13 +13,14 @@ Fast-paced binary number puzzle game for Android. Eight game modes, all built ar
 | 5 | **SPEED BURST** | Any mode, 60-second blitz |
 | 6 | **HEX MATCH** | Binary shown → enter the hex value |
 | 7 | **HEX WORD** | ASCII hex pairs → tap letters to decode the word |
-| 8 | **DAILY** | 10 mixed questions, one attempt per day |
+| 8 | **DAILY** | 10 mixed questions, one per day, 3 attempts per question |
 
 ## Scoring
 
 - **10 pts** base per correct answer
 - **+5 pts** per consecutive correct answer (streak bonus)
 - Wrong answers cost 1 pt in HEX WORD; no penalty in other modes
+- Daily Challenge: failed questions (3 wrong attempts) score 0 and are marked red
 
 ## Difficulty
 
@@ -32,6 +33,12 @@ T4     6-bit   32–63
 T5     7-bit   64–127
 T6     8-bit   128–255
 ```
+
+Daily Challenge uses a fixed schedule of 10 questions with increasing bit widths, seeded by date — everyone gets the same challenge each day.
+
+## Onboarding
+
+First-time players go through an interactive 6-page LEARN screen covering binary basics, positional values, hexadecimal, ASCII, and a hands-on practice exercise. Accessible any time via HOW TO PLAY.
 
 ## Tech Stack
 
@@ -72,6 +79,7 @@ lib/
     hex_screen.dart           # HEX MATCH
     hex_word_screen.dart
     daily_challenge_screen.dart
+    learn_screen.dart         # Interactive binary/hex/ASCII tutorial
     how_to_play_screen.dart
     achievements_screen.dart
     profile_screen.dart
@@ -99,3 +107,7 @@ docs/
 
 No personal data collected or transmitted. All data stored locally on device.  
 Privacy policy: https://gojankovic.github.io/go-binary-rush/privacy-policy.html
+
+## License
+
+MIT — see [LICENSE](LICENSE).
