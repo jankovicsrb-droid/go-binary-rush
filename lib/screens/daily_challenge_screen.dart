@@ -478,7 +478,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
                   isLast: _current + 1 >= _total)
               : const SizedBox(height: 46, key: ValueKey('ph')),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: MediaQuery.of(context).padding.bottom + 10),
       ],
     );
   }
@@ -561,8 +561,8 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
                             child: Container(
                               margin:
                                   const EdgeInsets.symmetric(horizontal: 2),
-                              width: 30,
-                              height: 38,
+                              width: 32,
+                              height: 42,
                               decoration: BoxDecoration(
                                   border: Border.all(
                                       color: _solved

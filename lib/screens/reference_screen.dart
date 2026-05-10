@@ -75,20 +75,17 @@ class ReferenceScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (int bits = 4; bits <= 8; bits += 1) ...[
-          Row(
-            children: [
-              Text('$bits-bit  ',
-                  style: const TextStyle(
-                      fontSize: 11, color: _dimGreen, letterSpacing: 1)),
-              BitRow(
-                bits: List.filled(bits, 1),
-                onToggle: (_) {},
-                enabled: false,
-                showLabels: true,
-              ),
-            ],
+          Text('$bits-bit',
+              style: const TextStyle(
+                  fontSize: 11, color: _dimGreen, letterSpacing: 1)),
+          const SizedBox(height: 6),
+          BitRow(
+            bits: List.filled(bits, 1),
+            onToggle: (_) {},
+            enabled: false,
+            showLabels: true,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
         ],
       ],
     );

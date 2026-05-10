@@ -202,7 +202,7 @@ class _HexWordScreenState extends State<HexWordScreen>
           _keyboard(),
           const SizedBox(height: 10),
           _nextButton(),
-          const SizedBox(height: 16),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 10),
         ],
       ),
     );
@@ -333,8 +333,8 @@ class _HexWordScreenState extends State<HexWordScreen>
       onTap: () => _tapLetter(letter),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 2),
-        width: 30,
-        height: 38,
+        width: 32,
+        height: 42,
         decoration: BoxDecoration(
           border: Border.all(
               color: _solved ? AppColors.g1 : AppColors.g2),

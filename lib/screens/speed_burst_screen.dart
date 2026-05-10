@@ -67,7 +67,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
   List<int> _bits = [];
 
   // Reverse
-  final TextEditingController _reverseInput = TextEditingController();
+  String _reverseEntry = '';
   bool _reverseWrong = false;
 
   // Addition
@@ -111,7 +111,6 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
     _countdownTimer?.cancel();
     _hwWrongTimer?.cancel();
     _flashController.dispose();
-    _reverseInput.dispose();
     super.dispose();
   }
 
@@ -189,8 +188,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
     final gen = _generator!;
     final bits = gen.currentBits;
     final target = gen.next();
-    setState(() => _target = target);
-    _reverseInput.clear();
+    setState(() { _target = target; _reverseEntry = ''; });
     switch (_mode) {
       case _SBMode.match:
         setState(() => _bits = List.filled(bits, 0));
@@ -286,14 +284,21 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
     if (_val(nb) == _target) _onCorrect();
   }
 
-  void _checkReverse(String v) {
+  void _tapReverseDigit(String d) {
     if (_questionSolved || _finished) return;
-    final input = int.tryParse(v.trim());
+    if (d == '⌫') {
+      if (_reverseEntry.isNotEmpty) {
+        setState(() => _reverseEntry = _reverseEntry.substring(0, _reverseEntry.length - 1));
+      }
+      return;
+    }
+    final next = _reverseEntry + d;
+    setState(() => _reverseEntry = next);
+    final input = int.tryParse(next);
     if (input == _target) {
       _onCorrect();
-    } else if (input != null && v.length >= _target.toString().length) {
-      setState(() => _reverseWrong = true);
-      _reverseInput.clear();
+    } else if (next.length >= _target.toString().length) {
+      setState(() { _reverseWrong = true; _reverseEntry = ''; });
       Future.delayed(const Duration(milliseconds: 400), () {
         if (mounted) setState(() => _reverseWrong = false);
       });
@@ -426,7 +431,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
         ),
         const Spacer(),
         _hwKeyboard(),
-        const SizedBox(height: 14),
+        SizedBox(height: MediaQuery.of(context).padding.bottom + 14),
       ]);
     }
 
@@ -551,8 +556,8 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
                             child: Container(
                               margin:
                                   const EdgeInsets.symmetric(horizontal: 2),
-                              width: 30,
-                              height: 38,
+                              width: 32,
+                              height: 42,
                               decoration: BoxDecoration(
                                   border: Border.all(
                                       color: _questionSolved
@@ -599,35 +604,64 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
                 TextStyle(fontSize: 11, color: _dimGreen, letterSpacing: 5)),
         const SizedBox(height: 16),
         BitRow(bits: _bits, onToggle: (_) {}, enabled: false),
-        const SizedBox(height: 20),
-        SizedBox(
-          width: 140,
-          child: TextField(
-            controller: _reverseInput,
-            enabled: !_questionSolved,
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            autofocus: true,
-            style:
-                TextStyle(fontSize: 40, color: _reverseWrong ? _red : _green),
-            decoration: InputDecoration(
-              hintText: '?',
-              hintStyle: const TextStyle(color: _dimGreen, fontSize: 40),
-              border:
-                  UnderlineInputBorder(borderSide: BorderSide(color: _dimGreen)),
-              focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                      color: _reverseWrong ? _red : _green, width: 2)),
-              enabledBorder:
-                  UnderlineInputBorder(borderSide: BorderSide(color: _dimGreen)),
-              disabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: _muteGreen)),
-            ),
-            onChanged: _checkReverse,
-            onSubmitted: (_) => _checkReverse(_reverseInput.text),
+        const SizedBox(height: 16),
+        Text(
+          _reverseEntry.isEmpty ? '?' : _reverseEntry,
+          style: TextStyle(
+            fontSize: 40,
+            fontWeight: FontWeight.bold,
+            color: _reverseWrong
+                ? _red
+                : (_reverseEntry.isEmpty ? _dimGreen : _green),
           ),
         ),
+        const SizedBox(height: 12),
+        _reverseNumPad(),
       ]);
+
+  Widget _reverseNumPad() {
+    const rows = [
+      ['1', '2', '3'],
+      ['4', '5', '6'],
+      ['7', '8', '9'],
+      ['⌫', '0', ''],
+    ];
+    return Column(
+      children: rows
+          .map((row) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: row
+                      .map((d) => d.isEmpty
+                          ? const SizedBox(width: 70)
+                          : GestureDetector(
+                              onTap: () => _tapReverseDigit(d),
+                              child: Container(
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                width: 62,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                    border: Border.all(
+                                        color: _questionSolved
+                                            ? _muteGreen
+                                            : _dimGreen)),
+                                alignment: Alignment.center,
+                                child: Text(d,
+                                    style: AppText.mono(
+                                        size: 16,
+                                        color: _questionSolved
+                                            ? _muteGreen
+                                            : _green)),
+                              ),
+                            ))
+                      .toList(),
+                ),
+              ))
+          .toList(),
+    );
+  }
 
   Widget _additionUI() {
     final vA = _val(_bitsA), vB = _val(_bitsB);

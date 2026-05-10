@@ -36,7 +36,7 @@ class _ReverseScreenState extends State<ReverseScreen>
 
   static const int _lapSize = GamePips.lapSize;
 
-  final TextEditingController _inputController = TextEditingController();
+  String _inputEntry = '';
   late AnimationController _pulseController;
   late Animation<double> _pulseAnim;
   late Animation<double> _scaleAnim;
@@ -77,7 +77,6 @@ class _ReverseScreenState extends State<ReverseScreen>
   @override
   void dispose() {
     _advanceTimer?.cancel();
-    _inputController.dispose();
     _pulseController.dispose();
     super.dispose();
   }
@@ -85,15 +84,21 @@ class _ReverseScreenState extends State<ReverseScreen>
   List<int> _toBits(int value, int numBits) =>
       List.generate(numBits, (i) => (value >> (numBits - 1 - i)) & 1);
 
-  void _submit() {
+  void _tapDigit(String d) {
     if (_solved) return;
-    final input = int.tryParse(_inputController.text.trim());
-    if (input == null) return;
+    if (d == '⌫') {
+      if (_inputEntry.isNotEmpty) {
+        setState(() => _inputEntry = _inputEntry.substring(0, _inputEntry.length - 1));
+      }
+      return;
+    }
+    final next = _inputEntry + d;
+    setState(() => _inputEntry = next);
+    final input = int.tryParse(next);
     if (input == _target) {
       _onCorrect();
-    } else {
-      setState(() => _wrong = true);
-      _inputController.clear();
+    } else if (next.length >= _target.toString().length) {
+      setState(() { _wrong = true; _inputEntry = ''; });
       Future.delayed(const Duration(milliseconds: 700), () {
         if (mounted) setState(() => _wrong = false);
       });
@@ -103,7 +108,6 @@ class _ReverseScreenState extends State<ReverseScreen>
   void _onCorrect() {
     HapticFeedback.mediumImpact();
     final earned = _scoreEngine!.onCorrect();
-    _inputController.clear();
     setState(() {
       _solved = true;
       _flashOpacity = 1.0;
@@ -129,6 +133,7 @@ class _ReverseScreenState extends State<ReverseScreen>
       _bits = _toBits(target, gen.currentBits);
       _solved = false;
       _wrong = false;
+      _inputEntry = '';
       _lapSolved = (_lapSolved + 1) % _lapSize;
     });
   }
@@ -161,30 +166,51 @@ class _ReverseScreenState extends State<ReverseScreen>
       ),
       body: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              children: [
-                const SizedBox(height: 16),
-                GameHud(gen: gen, score: score),
-                const Spacer(),
-                GamePips(lapSolved: _lapSolved, solved: _solved),
-                const SizedBox(height: 20),
-                Text('DECODE', style: AppText.kicker(color: AppColors.g2)
-                    .copyWith(letterSpacing: 5)),
-                const SizedBox(height: 24),
-                BitRow(
-                  bits: _bits,
-                  onToggle: (_) {},
-                  enabled: false,
+          Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    GameHud(gen: gen, score: score),
+                    const SizedBox(height: 12),
+                    GamePips(lapSolved: _lapSolved, solved: _solved),
+                    const SizedBox(height: 16),
+                    Text('DECODE', style: AppText.kicker(color: AppColors.g2)
+                        .copyWith(letterSpacing: 5)),
+                    const SizedBox(height: 16),
+                    BitRow(bits: _bits, onToggle: (_) {}, enabled: false),
+                  ],
                 ),
-                const SizedBox(height: 44),
-                _inputArea(),
-                const SizedBox(height: 32),
-                _feedback(),
-                const Spacer(),
-              ],
-            ),
+              ),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('DECIMAL VALUE?',
+                        style: AppText.kicker(color: AppColors.g2)
+                            .copyWith(letterSpacing: 3)),
+                    const SizedBox(height: 12),
+                    _valueDisplay(),
+                    const SizedBox(height: 8),
+                    AnimatedOpacity(
+                      opacity: _wrong ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 100),
+                      child: Text('WRONG',
+                          style: AppText.mono(size: 13, color: _red)
+                              .copyWith(letterSpacing: 5)),
+                    ),
+                    if (_solved) ...[
+                      const SizedBox(height: 16),
+                      _feedback(),
+                    ],
+                  ],
+                ),
+              ),
+              _numPad(),
+              SizedBox(height: MediaQuery.of(context).padding.bottom + 10),
+            ],
           ),
           IgnorePointer(
             child: AnimatedOpacity(
@@ -198,61 +224,60 @@ class _ReverseScreenState extends State<ReverseScreen>
     );
   }
 
-  Widget _inputArea() {
+  Widget _valueDisplay() {
+    final text = _inputEntry.isEmpty ? '?' : _inputEntry;
+    final color = _wrong ? _red : (_inputEntry.isEmpty ? _dimGreen : _green);
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 52,
+        color: color,
+        fontFamily: 'JetBrains Mono',
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+
+  Widget _numPad() {
+    const rows = [
+      ['1', '2', '3'],
+      ['4', '5', '6'],
+      ['7', '8', '9'],
+      ['⌫', '0', ''],
+    ];
     return Column(
-      children: [
-        Text('DECIMAL VALUE?',
-            style: AppText.kicker(color: AppColors.g2).copyWith(letterSpacing: 3)),
-        const SizedBox(height: 16),
-        SizedBox(
-          width: 140,
-          child: TextField(
-            controller: _inputController,
-            enabled: !_solved,
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            autofocus: true,
-            style: TextStyle(
-              fontSize: 44,
-              color: _wrong ? _red : _green,
-              fontFamily: 'JetBrains Mono',
-            ),
-            decoration: InputDecoration(
-              hintText: '?',
-              hintStyle: const TextStyle(color: _dimGreen, fontSize: 44),
-              border: UnderlineInputBorder(
-                  borderSide: BorderSide(color: _dimGreen)),
-              focusedBorder: UnderlineInputBorder(
-                borderSide:
-                    BorderSide(color: _wrong ? _red : _green, width: 2),
-              ),
-              enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: _dimGreen)),
-              disabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: _muteGreen)),
-            ),
-            onSubmitted: (_) => _submit(),
-          ),
-        ),
-        const SizedBox(height: 10),
-        AnimatedOpacity(
-          opacity: _wrong ? 1.0 : 0.0,
-          duration: const Duration(milliseconds: 100),
-          child: Text('WRONG',
-              style: AppText.mono(size: 13, color: _red).copyWith(letterSpacing: 5)),
-        ),
-        const SizedBox(height: 16),
-        if (!_solved)
-          GestureDetector(
-            onTap: _submit,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
-              decoration: BoxDecoration(border: Border.all(color: _dimGreen)),
-              child: Text('CONFIRM',
-                  style: AppText.label().copyWith(letterSpacing: 5)),
-            ),
-          ),
-      ],
+      children: rows
+          .map((row) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: row
+                      .map((d) => d.isEmpty
+                          ? const SizedBox(width: 82)
+                          : GestureDetector(
+                              onTap: () => _tapDigit(d),
+                              child: Container(
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 6),
+                                width: 70,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                    border: Border.all(
+                                        color: _solved
+                                            ? _muteGreen
+                                            : _dimGreen)),
+                                alignment: Alignment.center,
+                                child: Text(d,
+                                    style: AppText.mono(
+                                        size: 18,
+                                        color:
+                                            _solved ? _muteGreen : _green)),
+                              ),
+                            ))
+                      .toList(),
+                ),
+              ))
+          .toList(),
     );
   }
 
