@@ -166,9 +166,11 @@ class _LearnScreenState extends State<LearnScreen> {
           GestureDetector(
             onTap: _begin,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text('skip introduction →',
-                  style: AppText.kicker(color: AppColors.g1)),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+              child: Center(
+                child: Text('skip introduction →',
+                    style: AppText.kicker(color: AppColors.g1)),
+              ),
             ),
           ),
       ],

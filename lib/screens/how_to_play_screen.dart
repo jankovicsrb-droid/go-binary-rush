@@ -27,7 +27,7 @@ class HowToPlayScreen extends StatelessWidget {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(context).padding.bottom + 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
