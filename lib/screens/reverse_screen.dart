@@ -6,6 +6,7 @@ import '../game/score_engine.dart';
 import '../widgets/bit_row.dart';
 import '../widgets/game_hud.dart';
 import '../widgets/game_pips.dart';
+import '../widgets/num_pad.dart';
 import '../theme.dart';
 
 const _green = AppColors.g4;
@@ -93,15 +94,17 @@ class _ReverseScreenState extends State<ReverseScreen>
       return;
     }
     final next = _inputEntry + d;
-    setState(() => _inputEntry = next);
     final input = int.tryParse(next);
     if (input == _target) {
+      _inputEntry = next;
       _onCorrect();
     } else if (next.length >= _target.toString().length) {
       setState(() { _wrong = true; _inputEntry = ''; });
       Future.delayed(const Duration(milliseconds: 700), () {
         if (mounted) setState(() => _wrong = false);
       });
+    } else {
+      setState(() => _inputEntry = next);
     }
   }
 
@@ -208,7 +211,7 @@ class _ReverseScreenState extends State<ReverseScreen>
                   ],
                 ),
               ),
-              _numPad(),
+              NumPad(onTap: _tapDigit, disabled: _solved),
               SizedBox(height: MediaQuery.of(context).padding.bottom + 10),
             ],
           ),
@@ -238,51 +241,7 @@ class _ReverseScreenState extends State<ReverseScreen>
     );
   }
 
-  Widget _numPad() {
-    const rows = [
-      ['1', '2', '3'],
-      ['4', '5', '6'],
-      ['7', '8', '9'],
-      ['⌫', '0', ''],
-    ];
-    return Column(
-      children: rows
-          .map((row) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: row
-                      .map((d) => d.isEmpty
-                          ? const SizedBox(width: 82)
-                          : GestureDetector(
-                              onTap: () => _tapDigit(d),
-                              child: Container(
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 6),
-                                width: 70,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                    border: Border.all(
-                                        color: _solved
-                                            ? _muteGreen
-                                            : _dimGreen)),
-                                alignment: Alignment.center,
-                                child: Text(d,
-                                    style: AppText.mono(
-                                        size: 18,
-                                        color:
-                                            _solved ? _muteGreen : _green)),
-                              ),
-                            ))
-                      .toList(),
-                ),
-              ))
-          .toList(),
-    );
-  }
-
   Widget _feedback() {
-    if (!_solved) return const SizedBox.shrink();
     return Column(
       children: [
         ScaleTransition(

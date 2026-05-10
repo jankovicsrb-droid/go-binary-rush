@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../game/word_list.dart';
 import '../widgets/bit_row.dart';
+import '../widgets/hex_word_keyboard.dart';
+import '../widgets/num_pad.dart';
 import '../theme.dart';
 
 enum _QMode { match, reverse, hexWord }
@@ -33,12 +35,6 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
     with SingleTickerProviderStateMixin {
   static const int _total = 10;
 
-  static const _keyRows = [
-    ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-    ['Z', 'X', 'C', 'V', 'B', 'N', 'M'],
-  ];
-
   SharedPreferences? _prefs;
   String _dateKey = '';
   List<int> _targets = [];
@@ -66,6 +62,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
   int _hwRevealed = 0;
   bool _hwWrong = false;
   Timer? _hwWrongTimer;
+  List<String> _hwCachedHexPairs = [];
 
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
@@ -145,12 +142,18 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
 
   void _setupQuestion() {
     final s = _schedule[_current];
+    final hwPairs = s.$1 == _QMode.hexWord
+        ? _words[_current].codeUnits
+            .map((c) => c.toRadixString(16).padLeft(2, '0').toUpperCase())
+            .toList()
+        : <String>[];
     setState(() {
       _solved = false;
       _revEntry = '';
       _revWrong = false;
       _hwRevealed = 0;
       _hwWrong = false;
+      _hwCachedHexPairs = hwPairs;
       if (s.$1 == _QMode.match) {
         _bits = List.filled(s.$2, 0);
       }
@@ -188,18 +191,19 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
       }
       return;
     }
-    if (d.isEmpty) return;
     final next = _revEntry + d;
-    setState(() => _revEntry = next);
     final val = int.tryParse(next);
     if (val == _target) {
+      _revEntry = next;
       _triggerSuccess();
     } else if (next.length >= _target.toString().length) {
       _revWrongTimer?.cancel();
-      setState(() => _revWrong = true);
+      setState(() { _revWrong = true; _revEntry = next; });
       _revWrongTimer = Timer(const Duration(milliseconds: 400), () {
         if (mounted) setState(() { _revWrong = false; _revEntry = ''; });
       });
+    } else {
+      setState(() => _revEntry = next);
     }
   }
 
@@ -365,7 +369,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
         const SizedBox(height: 24),
         _revDisplay(),
         const SizedBox(height: 20),
-        if (!_solved) _numPad(),
+        if (!_solved) NumPad(onTap: _tapDigit, activeTextColor: AppColors.g3),
       ],
     );
   }
@@ -379,44 +383,6 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
             : AppColors.g4;
     return Text(text,
         style: AppText.mono(size: 52, color: color, weight: FontWeight.w700));
-  }
-
-  Widget _numPad() {
-    const rows = [
-      ['1', '2', '3'],
-      ['4', '5', '6'],
-      ['7', '8', '9'],
-      ['⌫', '0', ''],
-    ];
-    return Column(
-      children: rows
-          .map((row) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: row
-                      .map((d) => d.isEmpty
-                          ? const SizedBox(width: 82)
-                          : GestureDetector(
-                              onTap: () => _tapDigit(d),
-                              child: Container(
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 6),
-                                width: 70,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                    border: Border.all(color: AppColors.g2)),
-                                alignment: Alignment.center,
-                                child: Text(d,
-                                    style: AppText.mono(
-                                        size: 18, color: AppColors.g3)),
-                              ),
-                            ))
-                      .toList(),
-                ),
-              ))
-          .toList(),
-    );
   }
 
   Widget _binaryFeedback() {
@@ -468,7 +434,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
           ),
         ),
         const Spacer(),
-        _hwKeyboard(),
+        HexWordKeyboard(onTap: _tapLetter, disabled: _solved),
         const SizedBox(height: 10),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 180),
@@ -484,14 +450,11 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
   }
 
   Widget _hwHexDisplay() {
-    final pairs = _word.codeUnits
-        .map((c) => c.toRadixString(16).padLeft(2, '0').toUpperCase())
-        .toList();
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 10,
       runSpacing: 6,
-      children: pairs
+      children: _hwCachedHexPairs
           .map((p) => Text(p,
               style: AppText.mono(
                   size: 20, color: AppColors.amber, weight: FontWeight.w600)))
@@ -546,42 +509,6 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
         }),
       );
     });
-  }
-
-  Widget _hwKeyboard() {
-    return Column(
-      children: _keyRows
-          .map((row) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: row
-                      .map((l) => GestureDetector(
-                            onTap: () => _tapLetter(l),
-                            child: Container(
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 2),
-                              width: 32,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: _solved
-                                          ? AppColors.g1
-                                          : AppColors.g2)),
-                              alignment: Alignment.center,
-                              child: Text(l,
-                                  style: AppText.mono(
-                                      size: 12,
-                                      color: _solved
-                                          ? AppColors.g1
-                                          : AppColors.g3)),
-                            ),
-                          ))
-                      .toList(),
-                ),
-              ))
-          .toList(),
-    );
   }
 
   // ── Shared widgets ─────────────────────────────────────────────

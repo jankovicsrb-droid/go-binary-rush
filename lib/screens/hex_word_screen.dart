@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../game/score_engine.dart';
 import '../game/word_list.dart';
 import '../widgets/game_pips.dart';
+import '../widgets/hex_word_keyboard.dart';
 import '../theme.dart';
 
 class HexWordScreen extends StatefulWidget {
@@ -23,6 +24,7 @@ class _HexWordScreenState extends State<HexWordScreen>
   List<String> _pool = [];
   int _poolIdx = 0;
   String _word = '';
+  List<String> _cachedHexPairs = [];
   int _revealed = 0;
   bool _solved = false;
   bool _wrongThisWord = false;
@@ -35,12 +37,6 @@ class _HexWordScreenState extends State<HexWordScreen>
 
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
-
-  static const _keyRows = [
-    ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-    ['Z', 'X', 'C', 'V', 'B', 'N', 'M'],
-  ];
 
   @override
   void initState() {
@@ -82,16 +78,15 @@ class _HexWordScreenState extends State<HexWordScreen>
     final word = _pool[_poolIdx % _pool.length];
     setState(() {
       _word = word;
+      _cachedHexPairs = word.codeUnits
+          .map((c) => c.toRadixString(16).padLeft(2, '0').toUpperCase())
+          .toList();
       _revealed = 0;
       _solved = false;
       _wrongFlash = false;
       _wrongThisWord = false;
     });
   }
-
-  List<String> _hexPairs(String word) => word.codeUnits
-      .map((c) => c.toRadixString(16).padLeft(2, '0').toUpperCase())
-      .toList();
 
   void _tapLetter(String letter) {
     if (_solved || _score == null || _word.isEmpty) return;
@@ -199,7 +194,7 @@ class _HexWordScreenState extends State<HexWordScreen>
           ),
           Container(height: 1, color: AppColors.g1),
           const SizedBox(height: 10),
-          _keyboard(),
+          HexWordKeyboard(onTap: _tapLetter, disabled: _solved),
           const SizedBox(height: 10),
           _nextButton(),
           SizedBox(height: MediaQuery.of(context).padding.bottom + 10),
@@ -232,12 +227,11 @@ class _HexWordScreenState extends State<HexWordScreen>
   }
 
   Widget _hexDisplay() {
-    final pairs = _hexPairs(_word);
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 10,
       runSpacing: 6,
-      children: pairs
+      children: _cachedHexPairs
           .map((p) => Text(
                 p,
                 style: AppText.mono(
@@ -311,42 +305,6 @@ class _HexWordScreenState extends State<HexWordScreen>
     return Text(
       '[ OK ] ✓  +$_lastEarned PTS  ·  ×${score.streak}',
       style: AppText.mono(size: 11, color: AppColors.g3),
-    );
-  }
-
-  Widget _keyboard() {
-    return Column(
-      children: _keyRows
-          .map((row) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: row.map(_key).toList(),
-                ),
-              ))
-          .toList(),
-    );
-  }
-
-  Widget _key(String letter) {
-    return GestureDetector(
-      onTap: () => _tapLetter(letter),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        width: 32,
-        height: 42,
-        decoration: BoxDecoration(
-          border: Border.all(
-              color: _solved ? AppColors.g1 : AppColors.g2),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          letter,
-          style: AppText.mono(
-              size: 12,
-              color: _solved ? AppColors.g1 : AppColors.g3),
-        ),
-      ),
     );
   }
 

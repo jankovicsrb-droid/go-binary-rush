@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../game/question_generator.dart';
 import '../game/word_list.dart';
 import '../widgets/bit_row.dart';
+import '../widgets/hex_word_keyboard.dart';
+import '../widgets/num_pad.dart';
 import '../theme.dart';
 
 const _green = AppColors.g4;
@@ -83,15 +85,10 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
   List<String> _hwPool = [];
   int _hwPoolIdx = 0;
   String _hwWord = '';
+  List<String> _hwCachedHexPairs = [];
   int _hwRevealed = 0;
   bool _hwWrong = false;
   Timer? _hwWrongTimer;
-
-  static const _keyRows = [
-    ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-    ['Z', 'X', 'C', 'V', 'B', 'N', 'M'],
-  ];
 
   late AnimationController _flashController;
   late Animation<double> _flashAnim;
@@ -169,18 +166,21 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
   }
 
   void _loadQuestion() {
-    setState(() {
-      _questionSolved = false;
-      _reverseWrong = false;
-      _hwWrong = false;
-    });
     if (_mode == _SBMode.hexWord) {
       if (_hwPoolIdx >= _hwPool.length) {
         _hwPool.shuffle();
         _hwPoolIdx = 0;
       }
+      final word = _hwPool[_hwPoolIdx++];
+      final pairs = word.codeUnits
+          .map((c) => c.toRadixString(16).padLeft(2, '0').toUpperCase())
+          .toList();
       setState(() {
-        _hwWord = _hwPool[_hwPoolIdx++];
+        _questionSolved = false;
+        _reverseWrong = false;
+        _hwWrong = false;
+        _hwWord = word;
+        _hwCachedHexPairs = pairs;
         _hwRevealed = 0;
       });
       return;
@@ -188,28 +188,33 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
     final gen = _generator!;
     final bits = gen.currentBits;
     final target = gen.next();
-    setState(() { _target = target; _reverseEntry = ''; });
-    switch (_mode) {
-      case _SBMode.match:
-        setState(() => _bits = List.filled(bits, 0));
-      case _SBMode.reverse:
-        setState(() => _bits = _toBits(target, bits));
-      case _SBMode.addition:
-        setState(() {
+    int? xorSeed;
+    if (_mode == _SBMode.xor) {
+      final maxVal = (1 << bits) - 1;
+      xorSeed = _random.nextInt(maxVal + 1);
+    }
+    setState(() {
+      _questionSolved = false;
+      _reverseWrong = false;
+      _hwWrong = false;
+      _target = target;
+      _reverseEntry = '';
+      switch (_mode) {
+        case _SBMode.match:
+          _bits = List.filled(bits, 0);
+        case _SBMode.reverse:
+          _bits = _toBits(target, bits);
+        case _SBMode.addition:
           _bitsA = List.filled(bits, 0);
           _bitsB = List.filled(bits, 0);
-        });
-      case _SBMode.xor:
-        final maxVal = (1 << bits) - 1;
-        final a = _random.nextInt(maxVal + 1);
-        setState(() {
-          _xorA = _toBits(a, bits);
-          _xorB = _toBits(a ^ target, bits);
+        case _SBMode.xor:
+          _xorA = _toBits(xorSeed!, bits);
+          _xorB = _toBits(xorSeed ^ target, bits);
           _xorC = List.filled(bits, 0);
-        });
-      case _SBMode.hexWord:
-        break;
-    }
+        case _SBMode.hexWord:
+          break;
+      }
+    });
   }
 
   void _tapHwLetter(String letter) {
@@ -293,15 +298,17 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
       return;
     }
     final next = _reverseEntry + d;
-    setState(() => _reverseEntry = next);
     final input = int.tryParse(next);
     if (input == _target) {
+      _reverseEntry = next;
       _onCorrect();
     } else if (next.length >= _target.toString().length) {
       setState(() { _reverseWrong = true; _reverseEntry = ''; });
       Future.delayed(const Duration(milliseconds: 400), () {
         if (mounted) setState(() => _reverseWrong = false);
       });
+    } else {
+      setState(() => _reverseEntry = next);
     }
   }
 
@@ -430,7 +437,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
           child: Column(children: [...hud, const SizedBox(height: 20), _hwHexDisplay(), const SizedBox(height: 14), _hwLetterBoxes()]),
         ),
         const Spacer(),
-        _hwKeyboard(),
+        HexWordKeyboard(onTap: _tapHwLetter, disabled: _questionSolved, rowPadding: 2),
         SizedBox(height: MediaQuery.of(context).padding.bottom + 14),
       ]);
     }
@@ -488,13 +495,10 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
 
   Widget _hwHexDisplay() {
     if (_hwWord.isEmpty) return const SizedBox.shrink();
-    final pairs = _hwWord.codeUnits
-        .map((c) => c.toRadixString(16).padLeft(2, '0').toUpperCase())
-        .toList();
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 10,
-      children: pairs
+      children: _hwCachedHexPairs
           .map((p) => Text(p,
               style: AppText.mono(
                   size: 20, color: AppColors.amber, weight: FontWeight.w600)))
@@ -543,42 +547,6 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
     });
   }
 
-  Widget _hwKeyboard() {
-    return Column(
-      children: _keyRows
-          .map((row) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: row
-                      .map((l) => GestureDetector(
-                            onTap: () => _tapHwLetter(l),
-                            child: Container(
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 2),
-                              width: 32,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: _questionSolved
-                                          ? AppColors.g1
-                                          : AppColors.g2)),
-                              alignment: Alignment.center,
-                              child: Text(l,
-                                  style: AppText.mono(
-                                      size: 12,
-                                      color: _questionSolved
-                                          ? AppColors.g1
-                                          : AppColors.g3)),
-                            ),
-                          ))
-                      .toList(),
-                ),
-              ))
-          .toList(),
-    );
-  }
-
   Widget _matchUI() => Column(children: [
         const Text('TARGET',
             style:
@@ -616,52 +584,15 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
           ),
         ),
         const SizedBox(height: 12),
-        _reverseNumPad(),
+        NumPad(
+          onTap: _tapReverseDigit,
+          disabled: _questionSolved,
+          keyWidth: 62,
+          keyHeight: 40,
+          hMargin: 4,
+          rowPadding: 4,
+        ),
       ]);
-
-  Widget _reverseNumPad() {
-    const rows = [
-      ['1', '2', '3'],
-      ['4', '5', '6'],
-      ['7', '8', '9'],
-      ['⌫', '0', ''],
-    ];
-    return Column(
-      children: rows
-          .map((row) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: row
-                      .map((d) => d.isEmpty
-                          ? const SizedBox(width: 70)
-                          : GestureDetector(
-                              onTap: () => _tapReverseDigit(d),
-                              child: Container(
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 4),
-                                width: 62,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                    border: Border.all(
-                                        color: _questionSolved
-                                            ? _muteGreen
-                                            : _dimGreen)),
-                                alignment: Alignment.center,
-                                child: Text(d,
-                                    style: AppText.mono(
-                                        size: 16,
-                                        color: _questionSolved
-                                            ? _muteGreen
-                                            : _green)),
-                              ),
-                            ))
-                      .toList(),
-                ),
-              ))
-          .toList(),
-    );
-  }
 
   Widget _additionUI() {
     final vA = _val(_bitsA), vB = _val(_bitsB);
