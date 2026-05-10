@@ -6,6 +6,7 @@ import 'game_screen.dart';
 import 'hex_screen.dart';
 import 'hex_word_screen.dart';
 import 'how_to_play_screen.dart';
+import 'learn_screen.dart';
 import 'reverse_screen.dart';
 import 'speed_burst_screen.dart';
 import 'xor_screen.dart';
@@ -131,6 +132,23 @@ class _MenuScreenState extends State<MenuScreen> {
                       style: AppText.mono(size: 13, color: AppColors.g2)),
                   const SizedBox(width: 14),
                   Text('HOW TO PLAY',
+                      style: AppText.mono(size: 13, color: AppColors.g2)),
+                ],
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const LearnScreen())),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  Text('[i]',
+                      style: AppText.mono(size: 13, color: AppColors.g2)),
+                  const SizedBox(width: 14),
+                  Text('BINARY INTRODUCTION',
                       style: AppText.mono(size: 13, color: AppColors.g2)),
                 ],
               ),

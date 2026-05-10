@@ -45,6 +45,16 @@ class _LearnScreenState extends State<LearnScreen> {
     }
   }
 
+  void _prevPage() {
+    if (_step > 0) {
+      _pageCtrl.previousPage(
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeInOut,
+      );
+      setState(() => _step--);
+    }
+  }
+
   void _begin() {
     if (widget.isFirstLaunch) {
       Navigator.of(context).pushReplacement(
@@ -119,31 +129,46 @@ class _LearnScreenState extends State<LearnScreen> {
   Widget _bottomBar() {
     final isLast = _step == _steps - 1;
     if (isLast) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 4),
-        child: GestureDetector(
-          onTap: _practiceDone ? _begin : null,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: _practiceDone ? AppColors.g4 : AppColors.g1,
-                width: 1.5,
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 4),
+            child: GestureDetector(
+              onTap: _practiceDone ? _begin : null,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: _practiceDone ? AppColors.g4 : AppColors.g1,
+                    width: 1.5,
+                  ),
+                  boxShadow: _practiceDone ? AppGlow.sm : null,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  widget.isFirstLaunch ? 'BEGIN  →' : 'DONE  →',
+                  style: AppText.mono(
+                    size: 14,
+                    color: _practiceDone ? AppColors.g4 : AppColors.g1,
+                    weight: FontWeight.w600,
+                  ).copyWith(letterSpacing: 4),
+                ),
               ),
-              boxShadow: _practiceDone ? AppGlow.sm : null,
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              widget.isFirstLaunch ? 'BEGIN  →' : 'DONE  →',
-              style: AppText.mono(
-                size: 14,
-                color: _practiceDone ? AppColors.g4 : AppColors.g1,
-                weight: FontWeight.w600,
-              ).copyWith(letterSpacing: 4),
             ),
           ),
-        ),
+          GestureDetector(
+            onTap: _prevPage,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+              child: Center(
+                child: Text('← back',
+                    style: AppText.kicker(color: AppColors.g1)),
+              ),
+            ),
+          ),
+        ],
       );
     }
     return Column(
@@ -162,17 +187,18 @@ class _LearnScreenState extends State<LearnScreen> {
             ),
           ),
         ),
-        if (widget.isFirstLaunch)
-          GestureDetector(
-            onTap: _begin,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-              child: Center(
-                child: Text('skip introduction →',
-                    style: AppText.kicker(color: AppColors.g1)),
+        GestureDetector(
+          onTap: _step > 0 ? _prevPage : (widget.isFirstLaunch ? _begin : null),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+            child: Center(
+              child: Text(
+                _step > 0 ? '← back' : (widget.isFirstLaunch ? 'skip introduction →' : ''),
+                style: AppText.kicker(color: AppColors.g1),
               ),
             ),
           ),
+        ),
       ],
     );
   }
