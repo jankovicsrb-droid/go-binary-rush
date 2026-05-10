@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
+import 'learn_screen.dart';
 import 'main_shell.dart';
 
 class HowToPlayScreen extends StatelessWidget {
@@ -75,6 +76,26 @@ class HowToPlayScreen extends StatelessWidget {
                   _line('  T4       →  6-bit   (32 – 63)'),
                   _line('  T5       →  7-bit   (64 – 127)'),
                   _line('  T6       →  8-bit   (128 – 255)'),
+                  const SizedBox(height: 28),
+                  Container(height: 1, color: AppColors.g1),
+                  const SizedBox(height: 16),
+                  GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (_, a1, a2) => const LearnScreen(),
+                        transitionDuration: const Duration(milliseconds: 300),
+                        transitionsBuilder: (_, anim, a2, child) =>
+                            FadeTransition(opacity: anim, child: child),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text('BINARY INTRODUCTION  →',
+                            style: AppText.kicker(color: AppColors.g2)),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 8),
                 ],
               ),

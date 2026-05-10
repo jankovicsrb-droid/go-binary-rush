@@ -50,6 +50,10 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
   int _dailyStreak = 0;
   Timer? _advanceTimer;
 
+  // Attempt tracking (resets per question)
+  int _attempts = 0;
+  bool _failed = false;
+
   // Match state
   List<int> _bits = [];
 
@@ -148,6 +152,8 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
             .toList()
         : <String>[];
     setState(() {
+      _attempts = 0;
+      _failed = false;
       _solved = false;
       _revEntry = '';
       _revWrong = false;
@@ -174,7 +180,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
       List.generate(n, (i) => (value >> (n - 1 - i)) & 1);
 
   void _toggleBit(int index) {
-    if (_solved) return;
+    if (_solved || _failed) return;
     final nb = List<int>.from(_bits)..[index] ^= 1;
     setState(() => _bits = nb);
     if (_val(nb) == _target) _triggerSuccess();
@@ -183,7 +189,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
   // ── Reverse ────────────────────────────────────────────────────
 
   void _tapDigit(String d) {
-    if (_solved || _revWrong) return;
+    if (_solved || _failed || _revWrong) return;
     if (d == '⌫') {
       if (_revEntry.isNotEmpty) {
         setState(
@@ -197,11 +203,18 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
       _revEntry = next;
       _triggerSuccess();
     } else if (next.length >= _target.toString().length) {
+      _attempts++;
       _revWrongTimer?.cancel();
       setState(() { _revWrong = true; _revEntry = next; });
-      _revWrongTimer = Timer(const Duration(milliseconds: 400), () {
-        if (mounted) setState(() { _revWrong = false; _revEntry = ''; });
-      });
+      if (_attempts >= 3) {
+        _revWrongTimer = Timer(const Duration(milliseconds: 400), () {
+          if (mounted) _triggerFail();
+        });
+      } else {
+        _revWrongTimer = Timer(const Duration(milliseconds: 400), () {
+          if (mounted) setState(() { _revWrong = false; _revEntry = ''; });
+        });
+      }
     } else {
       setState(() => _revEntry = next);
     }
@@ -210,18 +223,25 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
   // ── HexWord ────────────────────────────────────────────────────
 
   void _tapLetter(String letter) {
-    if (_solved || _word.isEmpty) return;
+    if (_solved || _failed || _word.isEmpty) return;
     if (letter == _word[_hwRevealed].toUpperCase()) {
       HapticFeedback.selectionClick();
       setState(() => _hwRevealed++);
       if (_hwRevealed == _word.length) _triggerSuccess();
     } else {
+      _attempts++;
       HapticFeedback.lightImpact();
       _hwWrongTimer?.cancel();
       setState(() => _hwWrong = true);
-      _hwWrongTimer = Timer(const Duration(milliseconds: 300), () {
-        if (mounted) setState(() => _hwWrong = false);
-      });
+      if (_attempts >= 3) {
+        _hwWrongTimer = Timer(const Duration(milliseconds: 300), () {
+          if (mounted) _triggerFail();
+        });
+      } else {
+        _hwWrongTimer = Timer(const Duration(milliseconds: 300), () {
+          if (mounted) setState(() => _hwWrong = false);
+        });
+      }
     }
   }
 
@@ -239,6 +259,17 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
     });
     _advanceTimer?.cancel();
     _advanceTimer = Timer(const Duration(milliseconds: 700), _next);
+  }
+
+  void _triggerFail() {
+    HapticFeedback.heavyImpact();
+    _advanceTimer?.cancel();
+    final newResults = List<bool?>.from(_results)..[_current] = false;
+    setState(() {
+      _failed = true;
+      _results = newResults;
+    });
+    _advanceTimer = Timer(const Duration(milliseconds: 1500), _next);
   }
 
   void _next() {
@@ -357,8 +388,16 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
           BitRow(
               bits: _bits,
               onToggle: _toggleBit,
-              enabled: !_solved,
+              enabled: !_solved && !_failed,
               glowing: _solved),
+          if (!_solved && !_failed) ...[
+            const SizedBox(height: 20),
+            GestureDetector(
+              onTap: _triggerFail,
+              child: Text('GIVE UP →',
+                  style: AppText.mono(size: 11, color: AppColors.g1)),
+            ),
+          ],
         ],
       );
 
@@ -369,25 +408,52 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
         BitRow(bits: bits, onToggle: (_) {}, enabled: false, glowing: _solved),
         const SizedBox(height: 24),
         _revDisplay(),
+        if (!_solved && !_failed && _attempts > 0) ...[
+          const SizedBox(height: 6),
+          Text('ATT $_attempts / 3',
+              style: AppText.mono(size: 10, color: AppColors.red)),
+        ],
         const SizedBox(height: 20),
-        if (!_solved) NumPad(onTap: _tapDigit, activeTextColor: AppColors.g3),
+        if (!_solved && !_failed)
+          NumPad(onTap: _tapDigit, activeTextColor: AppColors.g3),
       ],
     );
   }
 
   Widget _revDisplay() {
-    final text = _revEntry.isEmpty ? '?' : _revEntry;
-    final color = _revWrong
+    final text = _failed ? '$_target' : (_revEntry.isEmpty ? '?' : _revEntry);
+    final color = _failed
         ? AppColors.red
-        : _revEntry.isEmpty
-            ? AppColors.g1
-            : AppColors.g4;
+        : _revWrong
+            ? AppColors.red
+            : _revEntry.isEmpty
+                ? AppColors.g1
+                : AppColors.g4;
     return Text(text,
         style: AppText.mono(size: 52, color: color, weight: FontWeight.w700));
   }
 
   Widget _binaryFeedback() {
-    if (!_solved) return const SizedBox.shrink();
+    if (!_solved && !_failed) return const SizedBox.shrink();
+    if (_failed) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('FAILED',
+              style: AppText.label().copyWith(
+                  fontSize: 20,
+                  letterSpacing: 8,
+                  color: AppColors.red,
+                  shadows: AppGlow.red
+                      .map((s) => Shadow(
+                          color: s.color, blurRadius: s.blurRadius))
+                      .toList())),
+          const SizedBox(height: 8),
+          Text('correct: $_target',
+              style: AppText.mono(size: 11, color: AppColors.g2)),
+        ],
+      );
+    }
     final isLast = _current + 1 >= _total;
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -430,16 +496,24 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
                   child: _solved
                       ? Text('CORRECT',
                           style: AppText.mono(size: 13, color: AppColors.g4))
-                      : null),
+                      : _failed
+                          ? Text('FAILED',
+                              style: AppText.mono(
+                                  size: 13, color: AppColors.red))
+                          : _attempts > 0
+                              ? Text('ATT $_attempts / 3',
+                                  style: AppText.mono(
+                                      size: 10, color: AppColors.red))
+                              : null),
             ],
           ),
         ),
         const Spacer(),
-        HexWordKeyboard(onTap: _tapLetter, disabled: _solved),
+        HexWordKeyboard(onTap: _tapLetter, disabled: _solved || _failed),
         const SizedBox(height: 10),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 180),
-          child: _solved
+          child: (_solved || _failed)
               ? _nextButton(
                   key: const ValueKey('next'),
                   isLast: _current + 1 >= _total)
@@ -521,30 +595,49 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
         final done = _results[i] == true;
         final isCurrent = i == _current;
 
+        final bool failed = _results[i] == false;
+
         final Color borderColor;
         final Color bgColor;
         final Widget inner;
+        final List<BoxShadow>? glow;
 
-        if (done && !isCurrent) {
+        if (failed && !isCurrent) {
+          borderColor = AppColors.red;
+          bgColor = AppColors.red.withValues(alpha: 0.06);
+          inner = Text('✗', style: AppText.mono(size: 9, color: AppColors.red));
+          glow = AppGlow.red;
+        } else if (done && !isCurrent) {
           borderColor = AppColors.g3;
           bgColor = AppColors.g0;
           inner = Text('✓', style: AppText.mono(size: 9, color: AppColors.g3));
+          glow = AppGlow.sm;
+        } else if (isCurrent && _failed) {
+          borderColor = AppColors.red;
+          bgColor = AppColors.red.withValues(alpha: 0.06);
+          inner = Text('✗',
+              style: AppText.mono(
+                  size: 9, color: AppColors.red, weight: FontWeight.w700));
+          glow = AppGlow.red;
         } else if (isCurrent && _solved) {
           borderColor = AppColors.g4;
           bgColor = AppColors.g0;
           inner = Text('✓',
               style: AppText.mono(
                   size: 9, color: AppColors.g4, weight: FontWeight.w700));
+          glow = AppGlow.sm;
         } else if (isCurrent) {
           borderColor = AppColors.g3;
           bgColor = Colors.transparent;
           inner =
               Text('${i + 1}', style: AppText.mono(size: 9, color: AppColors.g3));
+          glow = AppGlow.sm;
         } else {
           borderColor = AppColors.g1;
           bgColor = Colors.transparent;
           inner =
               Text('${i + 1}', style: AppText.mono(size: 8, color: AppColors.g1));
+          glow = null;
         }
 
         return Container(
@@ -554,7 +647,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
           decoration: BoxDecoration(
             border: Border.all(color: borderColor),
             color: bgColor,
-            boxShadow: done || isCurrent ? AppGlow.sm : null,
+            boxShadow: glow,
           ),
           alignment: Alignment.center,
           child: inner,
@@ -717,25 +810,32 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
       runSpacing: 8,
       children: List.generate(_total, (i) {
         final s = _schedule[i];
+        final isFailed = _results[i] == false;
         return Container(
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.g3),
-            color: AppColors.g0,
-            boxShadow: AppGlow.sm,
+            border: Border.all(
+                color: isFailed ? AppColors.red : AppColors.g3),
+            color: isFailed
+                ? AppColors.red.withValues(alpha: 0.06)
+                : AppColors.g0,
+            boxShadow: isFailed ? AppGlow.red : AppGlow.sm,
           ),
           alignment: Alignment.center,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('✓',
+              Text(
+                  isFailed ? '✗' : '✓',
                   style: AppText.mono(
                       size: 13,
-                      color: AppColors.g4,
+                      color: isFailed ? AppColors.red : AppColors.g4,
                       weight: FontWeight.w700)),
               Text(modeChar[s.$1]!,
-                  style: AppText.mono(size: 7, color: AppColors.g2)),
+                  style: AppText.mono(
+                      size: 7,
+                      color: isFailed ? AppColors.red.withValues(alpha: 0.6) : AppColors.g2)),
             ],
           ),
         );
