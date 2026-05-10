@@ -5,6 +5,7 @@ import 'daily_challenge_screen.dart';
 import 'game_screen.dart';
 import 'hex_screen.dart';
 import 'hex_word_screen.dart';
+import 'how_to_play_screen.dart';
 import 'reverse_screen.dart';
 import 'speed_burst_screen.dart';
 import 'xor_screen.dart';
@@ -115,6 +116,27 @@ class _MenuScreenState extends State<MenuScreen> {
             best: null,
             onTap: () => _push(const DailyChallengeScreen()),
           ),
+          const SizedBox(height: 16),
+          Container(height: 1, color: AppColors.g1),
+          const SizedBox(height: 14),
+          GestureDetector(
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const HowToPlayScreen())),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  Text('[?]',
+                      style: AppText.mono(size: 13, color: AppColors.g2)),
+                  const SizedBox(width: 14),
+                  Text('HOW TO PLAY',
+                      style: AppText.mono(size: 13, color: AppColors.g2)),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
         ],
       ),
     );

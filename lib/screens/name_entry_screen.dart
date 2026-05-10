@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme.dart';
-import 'main_shell.dart';
+import 'how_to_play_screen.dart';
 
 class NameEntryScreen extends StatefulWidget {
   const NameEntryScreen({super.key});
@@ -29,7 +29,8 @@ class _NameEntryScreenState extends State<NameEntryScreen> {
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, a1, a2) => const MainShell(),
+        pageBuilder: (_, a1, a2) =>
+            const HowToPlayScreen(isFirstLaunch: true),
         transitionDuration: const Duration(milliseconds: 400),
         transitionsBuilder: (_, anim, a2, child) =>
             FadeTransition(opacity: anim, child: child),
