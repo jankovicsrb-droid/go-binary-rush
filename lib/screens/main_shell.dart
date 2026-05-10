@@ -14,22 +14,29 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _tab = 0;
+  int _profileRefresh = 0;
+  int _achvRefresh = 0;
 
-  final List<Widget> _screens = const [
-    MenuScreen(),
-    ProfileScreen(),
-    AchievementsScreen(),
-    ReferenceScreen(),
-  ];
+  void _onTap(int i) {
+    if (i == 1) _profileRefresh++;
+    if (i == 2) _achvRefresh++;
+    setState(() => _tab = i);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final screens = [
+      const MenuScreen(),
+      ProfileScreen(key: ValueKey(_profileRefresh)),
+      AchievementsScreen(key: ValueKey(_achvRefresh)),
+      const ReferenceScreen(),
+    ];
     return Scaffold(
       backgroundColor: Colors.black,
-      body: IndexedStack(index: _tab, children: _screens),
+      body: IndexedStack(index: _tab, children: screens),
       bottomNavigationBar: _TerminalDock(
         active: _tab,
-        onTap: (i) => setState(() => _tab = i),
+        onTap: _onTap,
       ),
     );
   }
