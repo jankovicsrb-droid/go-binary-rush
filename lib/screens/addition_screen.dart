@@ -29,8 +29,10 @@ class _AdditionScreenState extends State<AdditionScreen>
   List<int> _bitsB = [];
   bool _solved = false;
   bool _loaded = false;
-  bool _hintOn = false;
-  bool _hintUsed = false;
+  bool _hintAOn = false;
+  bool _hintAUsed = false;
+  bool _hintBOn = false;
+  bool _hintBUsed = false;
   double _flashOpacity = 0.0;
   int _lapSolved = 0;
   int _lastEarned = 0;
@@ -144,8 +146,10 @@ class _AdditionScreenState extends State<AdditionScreen>
       _bitsA = List.filled(gen.currentBits, 0);
       _bitsB = List.filled(gen.currentBits, 0);
       _solved = false;
-      _hintOn = false;
-      _hintUsed = false;
+      _hintAOn = false;
+      _hintAUsed = false;
+      _hintBOn = false;
+      _hintBUsed = false;
       _lapSolved = (_lapSolved + 1) % _lapSize;
     });
   }
@@ -196,6 +200,7 @@ class _AdditionScreenState extends State<AdditionScreen>
                   bits: _bitsA,
                   value: valA,
                   onToggle: (i) => _toggle(_bitsA, i, (b) => _bitsA = b),
+                  hintOn: _hintAOn,
                 ),
                 const SizedBox(height: 16),
                 _rowSection(
@@ -203,6 +208,7 @@ class _AdditionScreenState extends State<AdditionScreen>
                   bits: _bitsB,
                   value: valB,
                   onToggle: (i) => _toggle(_bitsB, i, (b) => _bitsB = b),
+                  hintOn: _hintBOn,
                 ),
                 const SizedBox(height: 20),
                 _hintArea(),
@@ -230,6 +236,7 @@ class _AdditionScreenState extends State<AdditionScreen>
     required List<int> bits,
     required int value,
     required void Function(int) onToggle,
+    required bool hintOn,
   }) {
     return Column(
       children: [
@@ -239,7 +246,7 @@ class _AdditionScreenState extends State<AdditionScreen>
             Text(label,
                 style: AppText.kicker(color: AppColors.g2)
                     .copyWith(letterSpacing: 3)),
-            if (_hintOn || _solved) ...[
+            if (hintOn || _solved) ...[
               const SizedBox(width: 12),
               Text('= $value',
                   style: AppText.mono(
@@ -260,22 +267,55 @@ class _AdditionScreenState extends State<AdditionScreen>
   }
 
   Widget _hintArea() {
-    if (_solved || _hintOn) return const SizedBox.shrink();
+    if (_solved) return const SizedBox.shrink();
+    if (_hintAOn && _hintBOn) return const SizedBox.shrink();
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (!_hintAOn) _hintButton('SHOW A', _onHintA),
+        if (!_hintAOn && !_hintBOn) const SizedBox(width: 16),
+        if (!_hintBOn) _hintButton('SHOW B', _onHintB),
+      ],
+    );
+  }
+
+  Widget _hintButton(String label, VoidCallback onTap) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _hintOn = true;
-          if (!_hintUsed) {
-            _hintUsed = true;
-            _scoreEngine!.onHint();
-          }
-        });
-      },
-      child: Text(
-        '[ HINT  ·  −2 ]',
-        style: AppText.kicker(color: AppColors.amber).copyWith(letterSpacing: 3),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.amber.withValues(alpha: 0.6)),
+        ),
+        child: Text(
+          '$label  ·  −1',
+          style: AppText.kicker(color: AppColors.amber)
+              .copyWith(letterSpacing: 2),
+        ),
       ),
     );
+  }
+
+  void _onHintA() {
+    if (_hintAOn) return;
+    setState(() {
+      _hintAOn = true;
+      if (!_hintAUsed) {
+        _hintAUsed = true;
+        _scoreEngine!.onHint(1);
+      }
+    });
+  }
+
+  void _onHintB() {
+    if (_hintBOn) return;
+    setState(() {
+      _hintBOn = true;
+      if (!_hintBUsed) {
+        _hintBUsed = true;
+        _scoreEngine!.onHint(1);
+      }
+    });
   }
 
   Widget _targetDisplay() {

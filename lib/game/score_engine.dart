@@ -62,8 +62,8 @@ class ScoreEngine {
     return false;
   }
 
-  void onHint() {
-    score = (score - 2).clamp(0, 999999);
+  void onHint([int cost = 2]) {
+    score = (score - cost).clamp(0, 999999);
   }
 
   void onWrongLetter() {
