@@ -4,6 +4,7 @@ import 'menu_screen.dart';
 import 'profile_screen.dart';
 import 'achievements_screen.dart';
 import 'reference_screen.dart';
+import 'settings_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -16,10 +17,12 @@ class _MainShellState extends State<MainShell> {
   int _tab = 0;
   int _profileRefresh = 0;
   int _achvRefresh = 0;
+  int _settingsRefresh = 0;
 
   void _onTap(int i) {
     if (i == 1) _profileRefresh++;
     if (i == 2) _achvRefresh++;
+    if (i == 4) _settingsRefresh++;
     setState(() => _tab = i);
   }
 
@@ -30,6 +33,7 @@ class _MainShellState extends State<MainShell> {
       ProfileScreen(key: ValueKey(_profileRefresh)),
       AchievementsScreen(key: ValueKey(_achvRefresh)),
       const ReferenceScreen(),
+      SettingsScreen(key: ValueKey(_settingsRefresh)),
     ];
     return Scaffold(
       backgroundColor: Colors.black,
@@ -53,6 +57,7 @@ class _TerminalDock extends StatelessWidget {
     ('▤', 'STATS'),
     ('★', 'ACHV'),
     ('?', 'REF'),
+    ('⚙', 'SET'),
   ];
 
   @override
