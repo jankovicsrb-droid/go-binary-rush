@@ -62,7 +62,7 @@ class _AdditionScreenState extends State<AdditionScreen>
 
   Future<void> _initGame() async {
     final results = await Future.wait([
-      QuestionGenerator.create(mode: 'addition'),
+      QuestionGenerator.create(mode: 'addition', minTarget: 2),
       ScoreEngine.create(mode: 'addition'),
     ]);
     final gen = results[0] as QuestionGenerator;

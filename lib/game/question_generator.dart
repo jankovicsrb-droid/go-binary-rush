@@ -8,11 +8,14 @@ class QuestionGenerator {
   final String _tierKey;
   final String _seenPrefix;
   final List<Tier> _tiers;
+  final int _minTarget;
   int _tierIndex;
 
-  QuestionGenerator._(SharedPreferences prefs, int tier, String mode, List<Tier> tiers)
+  QuestionGenerator._(SharedPreferences prefs, int tier, String mode,
+      List<Tier> tiers, int minTarget)
       : _prefs = prefs,
         _tiers = tiers,
+        _minTarget = minTarget,
         _tierIndex = tier.clamp(0, tiers.length - 1),
         _tierKey = '${mode}_current_tier',
         _seenPrefix = '${mode}_seen_tier_';
@@ -20,11 +23,16 @@ class QuestionGenerator {
   static Future<QuestionGenerator> create({
     String mode = 'match',
     List<Tier>? tiers,
+    int minTarget = 0,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final effectiveTiers = tiers ?? kTiers;
     return QuestionGenerator._(
-        prefs, prefs.getInt('${mode}_current_tier') ?? 0, mode, effectiveTiers);
+        prefs,
+        prefs.getInt('${mode}_current_tier') ?? 0,
+        mode,
+        effectiveTiers,
+        minTarget);
   }
 
   int get currentBits => _tiers[_tierIndex].bits;
@@ -48,7 +56,10 @@ class QuestionGenerator {
 
   List<int> _available() {
     final seen = _getSeen();
-    return _tiers[_tierIndex].targets.where((t) => !seen.contains(t)).toList();
+    return _tiers[_tierIndex]
+        .targets
+        .where((t) => !seen.contains(t) && t >= _minTarget)
+        .toList();
   }
 
   Set<int> _getSeen() {

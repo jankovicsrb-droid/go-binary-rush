@@ -124,7 +124,10 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
     if (mode == _SBMode.hexWord) {
       hwPool = kWordList.where((w) => w.length <= 6).toList()..shuffle();
     } else {
-      gen = await QuestionGenerator.create(mode: key);
+      gen = await QuestionGenerator.create(
+        mode: key,
+        minTarget: mode == _SBMode.addition ? 2 : 0,
+      );
     }
     setState(() {
       _mode = mode;
