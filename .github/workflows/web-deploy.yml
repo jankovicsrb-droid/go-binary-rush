@@ -30,6 +30,9 @@ jobs:
 
       - run: flutter build web --release --base-href "/go-binary-rush/"
 
+      - name: Preserve docs/ assets at site root (privacy policy etc.)
+        run: cp -r docs/. build/web/
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web
