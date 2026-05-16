@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../game/difficulty.dart';
 import '../game/question_generator.dart';
 import '../game/score_engine.dart';
 import '../widgets/bit_row.dart';
+import '../widgets/new_best_banner.dart';
 import '../theme.dart';
 
 const _green = AppColors.g4;
@@ -29,6 +31,8 @@ class _HexScreenState extends State<HexScreen>
   bool _wrong = false;
   bool _loaded = false;
   double _flashOpacity = 0.0;
+  bool _newBestFlash = false;
+  Timer? _newBestTimer;
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnim;
@@ -69,6 +73,7 @@ class _HexScreenState extends State<HexScreen>
 
   @override
   void dispose() {
+    _newBestTimer?.cancel();
     _pulseController.dispose();
     super.dispose();
   }
@@ -109,10 +114,18 @@ class _HexScreenState extends State<HexScreen>
   void _triggerSuccess() {
     HapticFeedback.mediumImpact();
     _scoreEngine!.onCorrect();
+    final newBest = _scoreEngine!.consumeNewBestFlash();
     setState(() {
       _solved = true;
       _flashOpacity = 1.0;
+      if (newBest) _newBestFlash = true;
     });
+    if (newBest) {
+      _newBestTimer?.cancel();
+      _newBestTimer = Timer(const Duration(milliseconds: 600), () {
+        if (mounted) setState(() => _newBestFlash = false);
+      });
+    }
     _pulseController.repeat(reverse: true);
     Future.delayed(const Duration(milliseconds: 120), () {
       if (mounted) setState(() => _flashOpacity = 0.0);
@@ -198,6 +211,7 @@ class _HexScreenState extends State<HexScreen>
               child: Container(color: const Color(0x2200FF41)),
             ),
           ),
+          NewBestBanner(visible: _newBestFlash),
         ],
       ),
     );

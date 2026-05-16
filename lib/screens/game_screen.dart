@@ -6,6 +6,7 @@ import '../game/score_engine.dart';
 import '../widgets/bit_row.dart';
 import '../widgets/game_hud.dart';
 import '../widgets/game_pips.dart';
+import '../widgets/new_best_banner.dart';
 import '../theme.dart';
 
 const _green = AppColors.g4;
@@ -33,6 +34,8 @@ class _GameScreenState extends State<GameScreen>
   int _lapSolved = 0;
   int _lastEarned = 0;
   Timer? _advanceTimer;
+  bool _newBestFlash = false;
+  Timer? _newBestTimer;
 
   static const int _lapSize = 10;
 
@@ -75,6 +78,7 @@ class _GameScreenState extends State<GameScreen>
   @override
   void dispose() {
     _advanceTimer?.cancel();
+    _newBestTimer?.cancel();
     _pulseController.dispose();
     super.dispose();
   }
@@ -101,11 +105,19 @@ class _GameScreenState extends State<GameScreen>
   void _triggerSuccess() {
     HapticFeedback.mediumImpact();
     final earned = _scoreEngine!.onCorrect();
+    final newBest = _scoreEngine!.consumeNewBestFlash();
     setState(() {
       _solved = true;
       _flashOpacity = 1.0;
       _lastEarned = earned;
+      if (newBest) _newBestFlash = true;
     });
+    if (newBest) {
+      _newBestTimer?.cancel();
+      _newBestTimer = Timer(const Duration(milliseconds: 600), () {
+        if (mounted) setState(() => _newBestFlash = false);
+      });
+    }
     _pulseController.repeat(reverse: true);
     Future.delayed(const Duration(milliseconds: 120), () {
       if (mounted) setState(() => _flashOpacity = 0.0);
@@ -197,6 +209,7 @@ class _GameScreenState extends State<GameScreen>
               child: Container(color: AppColors.g3.withValues(alpha: 0.13)),
             ),
           ),
+          NewBestBanner(visible: _newBestFlash),
         ],
       ),
     );

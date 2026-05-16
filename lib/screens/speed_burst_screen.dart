@@ -7,6 +7,7 @@ import '../game/question_generator.dart';
 import '../game/word_list.dart';
 import '../widgets/bit_row.dart';
 import '../widgets/hex_word_keyboard.dart';
+import '../widgets/new_best_banner.dart';
 import '../widgets/num_pad.dart';
 import '../theme.dart';
 
@@ -61,6 +62,9 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
   int _highScore = 0;
   bool _newHighScore = false;
   bool _questionSolved = false;
+  bool _newBestFlash = false;
+  bool _newBestFlashed = false;
+  Timer? _newBestTimer;
 
   // Shared question target (match / reverse / addition / xor answer)
   int _target = 0;
@@ -107,6 +111,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
   void dispose() {
     _countdownTimer?.cancel();
     _hwWrongTimer?.cancel();
+    _newBestTimer?.cancel();
     _flashController.dispose();
     super.dispose();
   }
@@ -134,6 +139,8 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
       _finished = false;
       _hwPool = hwPool;
       _hwPoolIdx = 0;
+      _newBestFlash = false;
+      _newBestFlashed = false;
     });
     _loadQuestion();
     _startTimer();
@@ -244,6 +251,14 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
     if (_mode == _SBMode.hexWord) {
       final total = (_prefs?.getInt('hex_word_total') ?? 0) + 1;
       _prefs?.setInt('hex_word_total', total);
+    }
+    if (!_newBestFlashed && _highScore > 0 && _solved > _highScore) {
+      _newBestFlashed = true;
+      _newBestTimer?.cancel();
+      setState(() => _newBestFlash = true);
+      _newBestTimer = Timer(const Duration(milliseconds: 600), () {
+        if (mounted) setState(() => _newBestFlash = false);
+      });
     }
     Future.delayed(const Duration(milliseconds: 450), () {
       if (mounted && !_finished) _loadQuestion();
@@ -413,6 +428,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
                         fontWeight: FontWeight.bold)),
               ),
             ),
+          NewBestBanner(visible: _newBestFlash),
         ],
       ),
     );

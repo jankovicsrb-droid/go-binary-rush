@@ -3,13 +3,27 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ScoreEngine {
   final SharedPreferences _prefs;
   final String _keyHighScore;
+  final int _startingHigh;
+  bool _newBestAnnounced = false;
   int score = 0;
   int streak = 0;
   int highScore;
 
   ScoreEngine._(this._prefs, String mode)
       : _keyHighScore = '${mode}_high_score',
+        _startingHigh = _prefs.getInt('${mode}_high_score') ?? 0,
         highScore = _prefs.getInt('${mode}_high_score') ?? 0;
+
+  /// Returns true the first time `score` overtakes the high score that
+  /// existed when this engine was created. Only fires once per run, and
+  /// never on a fresh profile (starting high == 0).
+  bool consumeNewBestFlash() {
+    if (_newBestAnnounced) return false;
+    if (_startingHigh <= 0) return false;
+    if (score <= _startingHigh) return false;
+    _newBestAnnounced = true;
+    return true;
+  }
 
   static Future<ScoreEngine> create({String mode = 'match'}) async {
     final prefs = await SharedPreferences.getInstance();

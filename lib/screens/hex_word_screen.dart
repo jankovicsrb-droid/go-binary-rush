@@ -7,6 +7,7 @@ import '../game/score_engine.dart';
 import '../game/word_list.dart';
 import '../widgets/game_pips.dart';
 import '../widgets/hex_word_keyboard.dart';
+import '../widgets/new_best_banner.dart';
 import '../theme.dart';
 
 class HexWordScreen extends StatefulWidget {
@@ -34,6 +35,8 @@ class _HexWordScreenState extends State<HexWordScreen>
   bool _wrongFlash = false;
   Timer? _advanceTimer;
   Timer? _wrongTimer;
+  bool _newBestFlash = false;
+  Timer? _newBestTimer;
 
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
@@ -52,6 +55,7 @@ class _HexWordScreenState extends State<HexWordScreen>
   void dispose() {
     _advanceTimer?.cancel();
     _wrongTimer?.cancel();
+    _newBestTimer?.cancel();
     _pulseCtrl.dispose();
     super.dispose();
   }
@@ -112,12 +116,20 @@ class _HexWordScreenState extends State<HexWordScreen>
 
   void _triggerSolved() {
     final earned = _score!.onCorrect();
+    final newBest = _score!.consumeNewBestFlash();
     HapticFeedback.mediumImpact();
     _pulseCtrl.forward(from: 0);
     setState(() {
       _solved = true;
       _lastEarned = earned;
+      if (newBest) _newBestFlash = true;
     });
+    if (newBest) {
+      _newBestTimer?.cancel();
+      _newBestTimer = Timer(const Duration(milliseconds: 600), () {
+        if (mounted) setState(() => _newBestFlash = false);
+      });
+    }
     _advanceTimer?.cancel();
     _advanceTimer = Timer(const Duration(milliseconds: 700), _next);
     _saveProgress();
@@ -164,7 +176,8 @@ class _HexWordScreenState extends State<HexWordScreen>
           child: Container(height: 1, color: AppColors.g1),
         ),
       ),
-      body: Column(
+      body: Stack(children: [
+        Column(
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -200,7 +213,9 @@ class _HexWordScreenState extends State<HexWordScreen>
           _nextButton(),
           SizedBox(height: MediaQuery.of(context).padding.bottom + 10),
         ],
-      ),
+        ),
+        NewBestBanner(visible: _newBestFlash),
+      ]),
     );
   }
 
