@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/palette_settings.dart';
 import '../theme.dart';
 import 'menu_screen.dart';
 import 'profile_screen.dart';
@@ -37,7 +38,11 @@ class _MainShellState extends State<MainShell> {
     ];
     return Scaffold(
       backgroundColor: Colors.black,
-      body: IndexedStack(index: _tab, children: screens),
+      body: ValueListenableBuilder<int>(
+        valueListenable: PaletteSettings.index,
+        builder: (context, _, _) =>
+            IndexedStack(index: _tab, children: screens),
+      ),
       bottomNavigationBar: _TerminalDock(
         active: _tab,
         onTap: _onTap,
