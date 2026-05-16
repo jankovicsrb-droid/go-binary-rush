@@ -93,6 +93,7 @@ class _GameScreenState extends State<GameScreen>
 
   void _toggleBit(int index) {
     if (_solved) return;
+    Haptics.selectionClick();
     final newBits = List<int>.from(_bits);
     newBits[index] = newBits[index] == 0 ? 1 : 0;
     setState(() {

@@ -96,6 +96,7 @@ class _AdditionScreenState extends State<AdditionScreen>
 
   void _toggle(List<int> row, int index, void Function(List<int>) update) {
     if (_solved) return;
+    Haptics.selectionClick();
     final newBits = List<int>.from(row);
     newBits[index] = newBits[index] == 0 ? 1 : 0;
     update(newBits);

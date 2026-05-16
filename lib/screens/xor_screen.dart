@@ -114,6 +114,7 @@ class _XorScreenState extends State<XorScreen>
 
   void _toggleC(int index) {
     if (_solved) return;
+    Haptics.selectionClick();
     final newC = List<int>.from(_bitsC);
     newC[index] = newC[index] == 0 ? 1 : 0;
     setState(() => _bitsC = newC);

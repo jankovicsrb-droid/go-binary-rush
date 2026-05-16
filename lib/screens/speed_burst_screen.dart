@@ -280,6 +280,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
 
   void _toggleMatch(int i) {
     if (_questionSolved || _finished) return;
+    Haptics.selectionClick();
     final nb = List<int>.from(_bits)..[i] ^= 1;
     setState(() => _bits = nb);
     if (_val(nb) == _target) _onCorrect();
@@ -287,6 +288,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
 
   void _toggleAddA(int i) {
     if (_questionSolved || _finished) return;
+    Haptics.selectionClick();
     final nb = List<int>.from(_bitsA)..[i] ^= 1;
     setState(() => _bitsA = nb);
     if (_val(nb) + _val(_bitsB) == _target) _onCorrect();
@@ -294,6 +296,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
 
   void _toggleAddB(int i) {
     if (_questionSolved || _finished) return;
+    Haptics.selectionClick();
     final nb = List<int>.from(_bitsB)..[i] ^= 1;
     setState(() => _bitsB = nb);
     if (_val(_bitsA) + _val(nb) == _target) _onCorrect();
@@ -301,6 +304,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
 
   void _toggleXorC(int i) {
     if (_questionSolved || _finished) return;
+    Haptics.selectionClick();
     final nb = List<int>.from(_xorC)..[i] ^= 1;
     setState(() => _xorC = nb);
     if (_val(nb) == _target) _onCorrect();
