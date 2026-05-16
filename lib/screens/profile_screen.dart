@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/notifications.dart';
@@ -133,14 +134,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _divider('SPEED BURST'),
                 const SizedBox(height: 14),
                 ..._speedBests.entries.map((e) => _statRow(e.key, e.value > 0 ? '${e.value}' : '—')),
-                const SizedBox(height: 28),
-                _divider('SETTINGS'),
-                const SizedBox(height: 14),
-                _toggleRow(
-                  'DAILY REMINDER  ·  19:00',
-                  _reminderEnabled,
-                  _toggleReminder,
-                ),
+                if (!kIsWeb) ...[
+                  const SizedBox(height: 28),
+                  _divider('SETTINGS'),
+                  const SizedBox(height: 14),
+                  _toggleRow(
+                    'DAILY REMINDER  ·  19:00',
+                    _reminderEnabled,
+                    _toggleReminder,
+                  ),
+                ],
               ],
             ),
     );
