@@ -13,6 +13,17 @@ class Notifications {
   static const _channelName = 'Daily Reminder';
   static const _channelDesc = 'Reminds you that today\'s daily challenge is waiting';
 
+  static const _bodyPool = <String>[
+    'Daily ops awaiting. Tap to engage.',
+    'Cipher of the day primed. Decrypt now.',
+    'Binary feed updated. Authenticate.',
+    'Today\'s payload queued. Execute.',
+    'New mission unlocked. Boot in.',
+    'Daily packet inbound. Open channel.',
+    'Sequence ready. Initiate handshake.',
+    'Console pulse detected. Respond.',
+  ];
+
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
 
@@ -77,6 +88,14 @@ class Notifications {
     await reschedule(agentName);
   }
 
+  static String _bodyForToday(String agentName) {
+    final now = DateTime.now();
+    final startOfYear = DateTime(now.year, 1, 1);
+    final dayOfYear = now.difference(startOfYear).inDays;
+    final line = _bodyPool[dayOfYear.abs() % _bodyPool.length];
+    return agentName.isEmpty ? line : 'AGENT $agentName — $line';
+  }
+
   static Future<void> _schedule(String agentName) async {
     final prefs = await SharedPreferences.getInstance();
     final hour = prefs.getInt(prefsHour) ?? defaultHour;
@@ -87,14 +106,10 @@ class Notifications {
       when = when.add(const Duration(days: 1));
     }
 
-    final body = agentName.isEmpty
-        ? 'Daily ops awaiting. Tap to engage.'
-        : 'AGENT $agentName — daily ops awaiting. Tap to engage.';
-
     await _plugin.zonedSchedule(
       id: _notificationId,
       title: 'GO BINARY RUSH',
-      body: body,
+      body: _bodyForToday(agentName),
       scheduledDate: when,
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
