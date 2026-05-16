@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/main_shell.dart';
 import 'screens/name_entry_screen.dart';
@@ -13,7 +12,6 @@ import 'widgets/crt_overlay.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  GoogleFonts.config.allowRuntimeFetching = false;
   Haptics.init();
   CrtSettings.init();
   PaletteSettings.init();
