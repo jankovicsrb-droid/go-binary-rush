@@ -9,6 +9,7 @@ class QuestionGenerator {
   final String _seenPrefix;
   final List<Tier> _tiers;
   final int _minTarget;
+  final Set<int> _sessionSeen = {};
   int _tierIndex;
 
   QuestionGenerator._(SharedPreferences prefs, int tier, String mode,
@@ -41,13 +42,20 @@ class QuestionGenerator {
   int get tierCap => _tiers[_tierIndex].cap;
 
   int next() {
-    final available = _available();
+    var available = _available();
     if (available.isEmpty) {
       _advanceTier();
-      return next();
+      available = _available();
+      // At max tier the session-seen set can fully block the (now-reset) tier
+      // pool; clear it so we can keep generating instead of looping forever.
+      if (available.isEmpty) {
+        _sessionSeen.clear();
+        available = _available();
+      }
     }
     final target = available[_random.nextInt(available.length)];
     _markSeen(target);
+    _sessionSeen.add(target);
     if (_getSeen().length >= _tiers[_tierIndex].cap) {
       _advanceTier();
     }
@@ -58,7 +66,8 @@ class QuestionGenerator {
     final seen = _getSeen();
     return _tiers[_tierIndex]
         .targets
-        .where((t) => !seen.contains(t) && t >= _minTarget)
+        .where((t) =>
+            !seen.contains(t) && !_sessionSeen.contains(t) && t >= _minTarget)
         .toList();
   }
 
