@@ -252,6 +252,8 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
       final total = (_prefs?.getInt('hex_word_total') ?? 0) + 1;
       _prefs?.setInt('hex_word_total', total);
     }
+    final speedKey = 'speed_${_mode.name}_correct_count';
+    _prefs?.setInt(speedKey, (_prefs?.getInt(speedKey) ?? 0) + 1);
     if (!_newBestFlashed && _highScore > 0 && _solved > _highScore) {
       _newBestFlashed = true;
       _newBestTimer?.cancel();

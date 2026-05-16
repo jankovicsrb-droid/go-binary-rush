@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ScoreEngine {
   final SharedPreferences _prefs;
   final String _keyHighScore;
+  final String _keyModeCount;
   final int _startingHigh;
   bool _newBestAnnounced = false;
   int score = 0;
@@ -11,6 +12,7 @@ class ScoreEngine {
 
   ScoreEngine._(this._prefs, String mode)
       : _keyHighScore = '${mode}_high_score',
+        _keyModeCount = '${mode}_correct_count',
         _startingHigh = _prefs.getInt('${mode}_high_score') ?? 0,
         highScore = _prefs.getInt('${mode}_high_score') ?? 0;
 
@@ -43,6 +45,7 @@ class ScoreEngine {
       _prefs.setInt(_keyHighScore, highScore);
     }
     _prefs.setInt('total_correct', (_prefs.getInt('total_correct') ?? 0) + 1);
+    _prefs.setInt(_keyModeCount, (_prefs.getInt(_keyModeCount) ?? 0) + 1);
     final bestStreak = _prefs.getInt('best_streak_ever') ?? 0;
     if (streak > bestStreak) _prefs.setInt('best_streak_ever', streak);
     return earned;

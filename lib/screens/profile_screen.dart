@@ -19,6 +19,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _dailyStreak = 0;
   Map<String, int> _bests = {};
   Map<String, int> _speedBests = {};
+  Map<String, int> _counts = {};
+  Map<String, int> _speedCounts = {};
   bool _loaded = false;
   bool _reminderEnabled = false;
   bool _reminderBusy = false;
@@ -52,12 +54,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'HEX MATCH':prefs.getInt('hex_high_score') ?? 0,
         'HEX WORD': prefs.getInt('hex_word_high_score') ?? 0,
       };
+      _counts = {
+        'MATCH':    prefs.getInt('match_correct_count') ?? 0,
+        'REVERSE':  prefs.getInt('reverse_correct_count') ?? 0,
+        'ADDITION': prefs.getInt('addition_correct_count') ?? 0,
+        'XOR':      prefs.getInt('xor_correct_count') ?? 0,
+        'HEX MATCH':prefs.getInt('hex_correct_count') ?? 0,
+        'HEX WORD': prefs.getInt('hex_word_correct_count') ?? 0,
+      };
       _speedBests = {
         'MATCH':    prefs.getInt('speed_match_high_score') ?? 0,
         'REVERSE':  prefs.getInt('speed_reverse_high_score') ?? 0,
         'ADDITION': prefs.getInt('speed_addition_high_score') ?? 0,
         'XOR':      prefs.getInt('speed_xor_high_score') ?? 0,
         'HEX WORD': prefs.getInt('speed_hexWord_high_score') ?? 0,
+      };
+      _speedCounts = {
+        'MATCH':    prefs.getInt('speed_match_correct_count') ?? 0,
+        'REVERSE':  prefs.getInt('speed_reverse_correct_count') ?? 0,
+        'ADDITION': prefs.getInt('speed_addition_correct_count') ?? 0,
+        'XOR':      prefs.getInt('speed_xor_correct_count') ?? 0,
+        'HEX WORD': prefs.getInt('speed_hexWord_correct_count') ?? 0,
       };
       _reminderEnabled = prefs.getBool(Notifications.prefsEnabled) ?? false;
       _reminderHour = prefs.getInt(Notifications.prefsHour) ?? Notifications.defaultHour;
@@ -185,11 +202,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 28),
                 _divider('BEST SCORES'),
                 const SizedBox(height: 14),
-                ..._bests.entries.map((e) => _statRow(e.key, e.value > 0 ? '${e.value}' : '—')),
+                ..._bests.entries.map((e) => _statRow(
+                      e.key,
+                      e.value > 0 ? '${e.value}' : '—',
+                      subtitle: _countSubtitle(_counts[e.key] ?? 0),
+                    )),
                 const SizedBox(height: 28),
                 _divider('SPEED BURST'),
                 const SizedBox(height: 14),
-                ..._speedBests.entries.map((e) => _statRow(e.key, e.value > 0 ? '${e.value}' : '—')),
+                ..._speedBests.entries.map((e) => _statRow(
+                      e.key,
+                      e.value > 0 ? '${e.value}' : '—',
+                      subtitle: _countSubtitle(_speedCounts[e.key] ?? 0),
+                    )),
                 if (!kIsWeb) ...[
                   const SizedBox(height: 28),
                   _divider('SETTINGS'),
@@ -343,18 +368,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _statRow(String label, String value) {
+  String? _countSubtitle(int count) {
+    if (count <= 0) return null;
+    return '$count SOLVED';
+  }
+
+  Widget _statRow(String label, String value, {String? subtitle}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 7),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppText.mono(size: 12, color: AppColors.g2)),
-          Text(value,
-              style: AppText.mono(
-                  size: 13,
-                  color: value == '—' ? AppColors.g1 : AppColors.g3,
-                  weight: FontWeight.w600)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label, style: AppText.mono(size: 12, color: AppColors.g2)),
+              Text(value,
+                  style: AppText.mono(
+                      size: 13,
+                      color: value == '—' ? AppColors.g1 : AppColors.g3,
+                      weight: FontWeight.w600)),
+            ],
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 2),
+            Text(subtitle,
+                style: AppText.kicker(color: AppColors.g1)
+                    .copyWith(letterSpacing: 2)),
+          ],
         ],
       ),
     );
