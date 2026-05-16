@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/main_shell.dart';
 import 'screens/name_entry_screen.dart';
+import 'services/crt_settings.dart';
 import 'services/haptics.dart';
 import 'services/notifications.dart';
 import 'theme.dart';
@@ -13,6 +14,7 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
   Haptics.init();
+  CrtSettings.init();
   if (!kIsWeb) {
     Notifications.init();
   }
