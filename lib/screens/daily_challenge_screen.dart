@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../game/word_list.dart';
+import '../services/haptics.dart';
 import '../services/notifications.dart';
 import '../widgets/bit_row.dart';
 import '../widgets/hex_word_keyboard.dart';
@@ -226,12 +226,12 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
   void _tapLetter(String letter) {
     if (_solved || _failed || _word.isEmpty) return;
     if (letter == _word[_hwRevealed].toUpperCase()) {
-      HapticFeedback.selectionClick();
+      Haptics.selectionClick();
       setState(() => _hwRevealed++);
       if (_hwRevealed == _word.length) _triggerSuccess();
     } else {
       _attempts++;
-      HapticFeedback.lightImpact();
+      Haptics.lightImpact();
       _hwWrongTimer?.cancel();
       setState(() => _hwWrong = true);
       if (_attempts >= 3) {
@@ -249,7 +249,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
   // ── Success / flow ─────────────────────────────────────────────
 
   void _triggerSuccess() {
-    HapticFeedback.mediumImpact();
+    Haptics.mediumImpact();
     _pulseCtrl.repeat(reverse: true);
     final newResults = List<bool?>.from(_results)..[_current] = true;
     _prefs!.setInt('total_correct', (_prefs!.getInt('total_correct') ?? 0) + 1);
@@ -263,7 +263,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
   }
 
   void _triggerFail() {
-    HapticFeedback.heavyImpact();
+    Haptics.heavyImpact();
     _advanceTimer?.cancel();
     final newResults = List<bool?>.from(_results)..[_current] = false;
     setState(() {

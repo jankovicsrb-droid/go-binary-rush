@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../game/score_engine.dart';
+import '../services/haptics.dart';
 import '../game/word_list.dart';
 import '../widgets/game_pips.dart';
 import '../widgets/hex_word_keyboard.dart';
@@ -115,13 +115,13 @@ class _HexWordScreenState extends State<HexWordScreen>
     if (_solved || _score == null || _word.isEmpty) return;
     final expected = _word[_revealed].toUpperCase();
     if (letter == expected) {
-      HapticFeedback.selectionClick();
+      Haptics.selectionClick();
       setState(() => _revealed++);
       if (_revealed == _word.length) _triggerSolved();
     } else {
       _score!.onWrongLetter();
       _score!.onWrong();
-      HapticFeedback.lightImpact();
+      Haptics.lightImpact();
       _wrongTimer?.cancel();
       setState(() {
         _wrongFlash = true;
@@ -136,7 +136,7 @@ class _HexWordScreenState extends State<HexWordScreen>
   void _triggerSolved() {
     final earned = _score!.onCorrect();
     final newBest = _score!.consumeNewBestFlash();
-    HapticFeedback.mediumImpact();
+    Haptics.mediumImpact();
     _pulseCtrl.forward(from: 0);
     setState(() {
       _solved = true;

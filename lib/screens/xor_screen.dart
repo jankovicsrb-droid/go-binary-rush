@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../game/question_generator.dart';
 import '../game/score_engine.dart';
+import '../services/haptics.dart';
 import '../widgets/bit_row.dart';
 import '../widgets/game_hud.dart';
 import '../widgets/game_pips.dart';
@@ -121,7 +121,7 @@ class _XorScreenState extends State<XorScreen>
   }
 
   void _triggerSuccess() {
-    HapticFeedback.mediumImpact();
+    Haptics.mediumImpact();
     final earned = _scoreEngine!.onCorrect();
     final newBest = _scoreEngine!.consumeNewBestFlash();
     setState(() {

@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../game/question_generator.dart';
 import '../game/word_list.dart';
+import '../services/haptics.dart';
 import '../widgets/bit_row.dart';
 import '../widgets/hex_word_keyboard.dart';
 import '../widgets/new_best_banner.dart';
@@ -227,11 +227,11 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
   void _tapHwLetter(String letter) {
     if (_questionSolved || _finished || _hwWord.isEmpty) return;
     if (letter == _hwWord[_hwRevealed].toUpperCase()) {
-      HapticFeedback.selectionClick();
+      Haptics.selectionClick();
       setState(() => _hwRevealed++);
       if (_hwRevealed == _hwWord.length) _onCorrect();
     } else {
-      HapticFeedback.lightImpact();
+      Haptics.lightImpact();
       _hwWrongTimer?.cancel();
       setState(() => _hwWrong = true);
       _hwWrongTimer = Timer(const Duration(milliseconds: 250), () {
@@ -242,7 +242,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
 
   void _onCorrect() {
     if (_questionSolved || _finished) return;
-    HapticFeedback.mediumImpact();
+    Haptics.mediumImpact();
     setState(() {
       _questionSolved = true;
       _solved++;

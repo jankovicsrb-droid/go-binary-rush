@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../game/difficulty.dart';
 import '../game/question_generator.dart';
 import '../game/score_engine.dart';
+import '../services/haptics.dart';
 import '../widgets/bit_row.dart';
 import '../widgets/new_best_banner.dart';
 import '../theme.dart';
@@ -112,7 +112,7 @@ class _HexScreenState extends State<HexScreen>
   }
 
   void _triggerSuccess() {
-    HapticFeedback.mediumImpact();
+    Haptics.mediumImpact();
     _scoreEngine!.onCorrect();
     final newBest = _scoreEngine!.consumeNewBestFlash();
     setState(() {
@@ -133,7 +133,7 @@ class _HexScreenState extends State<HexScreen>
   }
 
   void _onWrong() {
-    HapticFeedback.lightImpact();
+    Haptics.lightImpact();
     _scoreEngine!.onWrong();
     setState(() {
       _wrong = true;

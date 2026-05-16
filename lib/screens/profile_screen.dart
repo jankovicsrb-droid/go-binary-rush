@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/haptics.dart';
 import '../services/notifications.dart';
 import '../theme.dart';
 
@@ -25,6 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _reminderEnabled = false;
   bool _reminderBusy = false;
   int _reminderHour = Notifications.defaultHour;
+  bool _hapticsEnabled = true;
 
   @override
   void initState() {
@@ -78,6 +80,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       };
       _reminderEnabled = prefs.getBool(Notifications.prefsEnabled) ?? false;
       _reminderHour = prefs.getInt(Notifications.prefsHour) ?? Notifications.defaultHour;
+      _hapticsEnabled = prefs.getBool(Haptics.prefsEnabled) ?? true;
       _loaded = true;
     });
   }
@@ -215,10 +218,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       e.value > 0 ? '${e.value}' : '—',
                       subtitle: _countSubtitle(_speedCounts[e.key] ?? 0),
                     )),
+                const SizedBox(height: 28),
+                _divider('SETTINGS'),
+                const SizedBox(height: 14),
+                _toggleRow(
+                  'HAPTICS',
+                  _hapticsEnabled,
+                  (v) async {
+                    setState(() => _hapticsEnabled = v);
+                    await Haptics.setEnabled(v);
+                  },
+                ),
                 if (!kIsWeb) ...[
-                  const SizedBox(height: 28),
-                  _divider('SETTINGS'),
-                  const SizedBox(height: 14),
                   _toggleRow(
                     'DAILY REMINDER',
                     _reminderEnabled,
