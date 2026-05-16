@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/main_shell.dart';
 import 'screens/name_entry_screen.dart';
@@ -6,6 +7,7 @@ import 'theme.dart';
 import 'widgets/crt_overlay.dart';
 
 void main() {
+  GoogleFonts.config.allowRuntimeFetching = false;
   runApp(const BinaryRushApp());
 }
 

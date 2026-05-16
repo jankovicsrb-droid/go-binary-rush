@@ -54,6 +54,9 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  assets:
+    - google_fonts/
+
 flutter_launcher_icons:
   android: true
   ios: false
