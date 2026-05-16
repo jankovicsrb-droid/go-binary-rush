@@ -10,19 +10,76 @@ import '../widgets/hex_word_keyboard.dart';
 import '../widgets/num_pad.dart';
 import '../theme.dart';
 
-enum _QMode { match, reverse, hexWord }
+enum _QMode { match, reverse, hexWord, addition, xor, hexMatch }
 
-const _schedule = [
-  (_QMode.match,   4),
-  (_QMode.match,   4),
-  (_QMode.reverse, 4),
-  (_QMode.match,   5),
-  (_QMode.reverse, 5),
-  (_QMode.match,   6),
-  (_QMode.hexWord, 0),
-  (_QMode.hexWord, 0),
-  (_QMode.match,   7),
-  (_QMode.match,   8),
+typedef _Slot = (_QMode, int);
+
+const List<List<_Slot>> _scheduleVariants = [
+  // 0 — Classic match/reverse mix
+  [
+    (_QMode.match,   4),
+    (_QMode.match,   4),
+    (_QMode.reverse, 4),
+    (_QMode.match,   5),
+    (_QMode.reverse, 5),
+    (_QMode.match,   6),
+    (_QMode.hexWord, 0),
+    (_QMode.hexWord, 0),
+    (_QMode.match,   7),
+    (_QMode.match,   8),
+  ],
+  // 1 — Addition focus
+  [
+    (_QMode.match,    4),
+    (_QMode.addition, 4),
+    (_QMode.match,    5),
+    (_QMode.addition, 5),
+    (_QMode.reverse,  5),
+    (_QMode.addition, 6),
+    (_QMode.match,    6),
+    (_QMode.reverse,  6),
+    (_QMode.hexWord,  0),
+    (_QMode.match,    7),
+  ],
+  // 2 — XOR focus
+  [
+    (_QMode.match,   4),
+    (_QMode.xor,     4),
+    (_QMode.reverse, 4),
+    (_QMode.xor,     5),
+    (_QMode.match,   5),
+    (_QMode.xor,     6),
+    (_QMode.match,   6),
+    (_QMode.reverse, 6),
+    (_QMode.xor,     7),
+    (_QMode.match,   8),
+  ],
+  // 3 — Hex focus
+  [
+    (_QMode.match,    4),
+    (_QMode.hexMatch, 4),
+    (_QMode.match,    5),
+    (_QMode.hexMatch, 4),
+    (_QMode.reverse,  5),
+    (_QMode.hexMatch, 8),
+    (_QMode.match,    6),
+    (_QMode.hexWord,  0),
+    (_QMode.hexMatch, 8),
+    (_QMode.match,    7),
+  ],
+  // 4 — Full mix
+  [
+    (_QMode.match,    4),
+    (_QMode.addition, 4),
+    (_QMode.xor,      4),
+    (_QMode.reverse,  5),
+    (_QMode.hexMatch, 4),
+    (_QMode.match,    6),
+    (_QMode.addition, 5),
+    (_QMode.xor,      6),
+    (_QMode.hexWord,  0),
+    (_QMode.match,    8),
+  ],
 ];
 
 class DailyChallengeScreen extends StatefulWidget {
@@ -38,8 +95,10 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
 
   SharedPreferences? _prefs;
   String _dateKey = '';
+  List<_Slot> _schedule = _scheduleVariants[0];
   List<int> _targets = [];
   List<String> _words = [];
+  List<int> _xorAs = [];
   int _current = 0;
   List<bool?> _results = List.filled(_total, null);
   bool _solved = false;
@@ -69,6 +128,20 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
   Timer? _hwWrongTimer;
   List<String> _hwCachedHexPairs = [];
 
+  // Addition state
+  List<int> _addA = [];
+  List<int> _addB = [];
+
+  // XOR state
+  List<int> _curXorA = [];
+  List<int> _curXorB = [];
+  List<int> _curXorC = [];
+
+  // HEX MATCH state
+  int? _hmHighEntry;
+  bool _hmWrong = false;
+  Timer? _hmWrongTimer;
+
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
   late Animation<double> _scaleAnim;
@@ -95,6 +168,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
     _advanceTimer?.cancel();
     _revWrongTimer?.cancel();
     _hwWrongTimer?.cancel();
+    _hmWrongTimer?.cancel();
     _pulseCtrl.dispose();
     super.dispose();
   }
@@ -106,22 +180,49 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
         '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
     final seed = now.year * 10000 + now.month * 100 + now.day;
 
+    final startOfYear = DateTime(now.year, 1, 1);
+    final dayOfYear = now.difference(startOfYear).inDays;
+    final schedule =
+        _scheduleVariants[dayOfYear.abs() % _scheduleVariants.length];
+
     final shortWords = kWordList.where((w) => w.length <= 6).toList();
     final targets = <int>[];
     final words = <String>[];
+    final xorAs = <int>[];
 
     for (int i = 0; i < _total; i++) {
       final rng = Random(seed + i * 7919);
-      final s = _schedule[i];
+      final s = schedule[i];
       if (s.$1 == _QMode.hexWord) {
         targets.add(0);
         words.add(shortWords[rng.nextInt(shortWords.length)]);
+        xorAs.add(0);
+      } else if (s.$1 == _QMode.addition) {
+        // Target high enough to require both rows; range 2..max-1.
+        final b = s.$2;
+        final maxVal = (1 << b) - 1;
+        targets.add(2 + rng.nextInt(maxVal - 2));
+        words.add('');
+        xorAs.add(0);
+      } else if (s.$1 == _QMode.xor) {
+        final b = s.$2;
+        final maxVal = (1 << b) - 1;
+        targets.add(1 + rng.nextInt(maxVal));
+        xorAs.add(rng.nextInt(maxVal + 1));
+        words.add('');
+      } else if (s.$1 == _QMode.hexMatch) {
+        final b = s.$2;
+        final maxVal = (1 << b) - 1;
+        targets.add(1 + rng.nextInt(maxVal));
+        words.add('');
+        xorAs.add(0);
       } else {
         final b = s.$2;
         final min = 1 << (b - 1);
         final max = (1 << b) - 1;
         targets.add(min + rng.nextInt(max - min + 1));
         words.add('');
+        xorAs.add(0);
       }
     }
 
@@ -132,8 +233,10 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
     setState(() {
       _prefs = prefs;
       _dateKey = dateKey;
+      _schedule = schedule;
       _targets = targets;
       _words = words;
+      _xorAs = xorAs;
       _results = List.filled(_total, null);
       _bestScore = best;
       _score = alreadyDone ? best : 0;
@@ -160,9 +263,18 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
       _revWrong = false;
       _hwRevealed = 0;
       _hwWrong = false;
+      _hmHighEntry = null;
+      _hmWrong = false;
       _hwCachedHexPairs = hwPairs;
       if (s.$1 == _QMode.match) {
         _bits = List.filled(s.$2, 0);
+      } else if (s.$1 == _QMode.addition) {
+        _addA = List.filled(s.$2, 0);
+        _addB = List.filled(s.$2, 0);
+      } else if (s.$1 == _QMode.xor) {
+        _curXorA = _toBits(_xorAs[_current], s.$2);
+        _curXorB = _toBits(_xorAs[_current] ^ _target, s.$2);
+        _curXorC = List.filled(s.$2, 0);
       }
     });
   }
@@ -182,9 +294,93 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
 
   void _toggleBit(int index) {
     if (_solved || _failed) return;
+    Haptics.selectionClick();
     final nb = List<int>.from(_bits)..[index] ^= 1;
     setState(() => _bits = nb);
     if (_val(nb) == _target) _triggerSuccess();
+  }
+
+  // ── Addition ───────────────────────────────────────────────────
+
+  void _toggleAddA(int index) {
+    if (_solved || _failed) return;
+    Haptics.selectionClick();
+    final nb = List<int>.from(_addA)..[index] ^= 1;
+    setState(() => _addA = nb);
+    _checkAddition();
+  }
+
+  void _toggleAddB(int index) {
+    if (_solved || _failed) return;
+    Haptics.selectionClick();
+    final nb = List<int>.from(_addB)..[index] ^= 1;
+    setState(() => _addB = nb);
+    _checkAddition();
+  }
+
+  void _checkAddition() {
+    final va = _val(_addA);
+    final vb = _val(_addB);
+    if (va > 0 && vb > 0 && va + vb == _target) _triggerSuccess();
+  }
+
+  // ── XOR ────────────────────────────────────────────────────────
+
+  void _toggleXorC(int index) {
+    if (_solved || _failed) return;
+    Haptics.selectionClick();
+    final nb = List<int>.from(_curXorC)..[index] ^= 1;
+    setState(() => _curXorC = nb);
+    if (_val(nb) == _target) _triggerSuccess();
+  }
+
+  // ── HEX MATCH ──────────────────────────────────────────────────
+
+  bool get _hmIs4bit => _qBits == 4;
+
+  void _hmTap(int digit) {
+    if (_solved || _failed || _hmWrong) return;
+    if (_hmIs4bit) {
+      if (digit == _target) {
+        _triggerSuccess();
+      } else {
+        _hmOnWrong();
+      }
+    } else {
+      if (_hmHighEntry == null) {
+        setState(() => _hmHighEntry = digit);
+      } else {
+        if (_hmHighEntry! * 16 + digit == _target) {
+          _triggerSuccess();
+        } else {
+          _hmOnWrong();
+        }
+      }
+    }
+  }
+
+  void _hmBackspace() {
+    if (_solved || _failed || _hmHighEntry == null) return;
+    setState(() => _hmHighEntry = null);
+  }
+
+  void _hmOnWrong() {
+    _attempts++;
+    Haptics.lightImpact();
+    _hmWrongTimer?.cancel();
+    setState(() {
+      _hmWrong = true;
+      _hmHighEntry = null;
+    });
+    if (_attempts >= 3) {
+      _hmWrongTimer = Timer(const Duration(milliseconds: 400), () {
+        if (mounted) _triggerFail();
+      });
+    } else {
+      _hmWrongTimer = Timer(const Duration(milliseconds: 400), () {
+        if (mounted) setState(() => _hmWrong = false);
+      });
+    }
   }
 
   // ── Reverse ────────────────────────────────────────────────────
@@ -360,8 +556,296 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
     );
   }
 
-  Widget _buildGame() =>
-      _mode == _QMode.hexWord ? _buildHexWordGame() : _buildBinaryGame();
+  Widget _buildGame() {
+    switch (_mode) {
+      case _QMode.hexWord:
+        return _buildHexWordGame();
+      case _QMode.addition:
+        return _buildAdditionGame();
+      case _QMode.xor:
+        return _buildXorGame();
+      case _QMode.hexMatch:
+        return _buildHexMatchGame();
+      case _QMode.match:
+      case _QMode.reverse:
+        return _buildBinaryGame();
+    }
+  }
+
+  // ── Addition game ──────────────────────────────────────────────
+
+  Widget _buildAdditionGame() {
+    final va = _val(_addA);
+    final vb = _val(_addB);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          const SizedBox(height: 16),
+          _progressGrid(),
+          const Spacer(),
+          _modeLabel(),
+          const SizedBox(height: 14),
+          Text('$_target', style: AppText.bigTarget()),
+          const SizedBox(height: 4),
+          Text('A > 0   +   B > 0',
+              style: AppText.kicker(color: AppColors.g2)
+                  .copyWith(letterSpacing: 3)),
+          const SizedBox(height: 18),
+          _addRow('A', _addA, va, _toggleAddA),
+          const SizedBox(height: 12),
+          _addRow('B', _addB, vb, _toggleAddB),
+          const SizedBox(height: 16),
+          if (!_solved && !_failed)
+            GestureDetector(
+              onTap: _triggerFail,
+              child: Text('GIVE UP →',
+                  style: AppText.mono(size: 11, color: AppColors.g1)),
+            ),
+          const SizedBox(height: 12),
+          SizedBox(height: 60, child: _binaryFeedback()),
+          const Spacer(),
+        ],
+      ),
+    );
+  }
+
+  Widget _addRow(String label, List<int> bits, int v,
+      void Function(int) onToggle) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(label,
+                style: AppText.kicker(color: AppColors.g2)
+                    .copyWith(letterSpacing: 3)),
+            if (_solved) ...[
+              const SizedBox(width: 12),
+              Text('= $v',
+                  style: AppText.mono(
+                      size: 16, color: AppColors.g4, weight: FontWeight.w600)),
+            ],
+          ],
+        ),
+        const SizedBox(height: 4),
+        BitRow(
+            bits: bits,
+            onToggle: onToggle,
+            enabled: !_solved && !_failed,
+            glowing: _solved),
+      ],
+    );
+  }
+
+  // ── XOR game ───────────────────────────────────────────────────
+
+  Widget _buildXorGame() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          const SizedBox(height: 16),
+          _progressGrid(),
+          const Spacer(),
+          _modeLabel(),
+          const SizedBox(height: 14),
+          Text('A  ⊕  B  =  C',
+              style: AppText.kicker(color: AppColors.g3)
+                  .copyWith(letterSpacing: 4, fontSize: 12)),
+          const SizedBox(height: 14),
+          _xorFixedRow('A', _curXorA),
+          const SizedBox(height: 6),
+          _xorFixedRow('B', _curXorB),
+          const SizedBox(height: 10),
+          Container(height: 1, width: 220, color: AppColors.g1),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                  width: 20,
+                  child: Text('C',
+                      style: AppText.kicker(color: AppColors.g2))),
+              const SizedBox(width: 8),
+              BitRow(
+                  bits: _curXorC,
+                  onToggle: _toggleXorC,
+                  enabled: !_solved && !_failed,
+                  glowing: _solved),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (!_solved && !_failed)
+            GestureDetector(
+              onTap: _triggerFail,
+              child: Text('GIVE UP →',
+                  style: AppText.mono(size: 11, color: AppColors.g1)),
+            ),
+          const SizedBox(height: 12),
+          SizedBox(height: 60, child: _binaryFeedback()),
+          const Spacer(),
+        ],
+      ),
+    );
+  }
+
+  Widget _xorFixedRow(String label, List<int> bits) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+            width: 20,
+            child: Text(label, style: AppText.kicker(color: AppColors.g2))),
+        const SizedBox(width: 8),
+        BitRow(bits: bits, onToggle: (_) {}, enabled: false),
+      ],
+    );
+  }
+
+  // ── HEX MATCH game ─────────────────────────────────────────────
+
+  Widget _buildHexMatchGame() {
+    final bits = _toBits(_target, _qBits);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          const SizedBox(height: 16),
+          _progressGrid(),
+          const Spacer(),
+          _modeLabel(),
+          const SizedBox(height: 14),
+          if (_hmIs4bit)
+            BitRow(
+                bits: bits,
+                onToggle: (_) {},
+                enabled: false,
+                glowing: _solved)
+          else
+            Column(children: [
+              BitRow(
+                  bits: bits.sublist(0, 4),
+                  onToggle: (_) {},
+                  enabled: false,
+                  glowing: _solved),
+              const SizedBox(height: 6),
+              BitRow(
+                  bits: bits.sublist(4),
+                  onToggle: (_) {},
+                  enabled: false,
+                  glowing: _solved),
+            ]),
+          const SizedBox(height: 20),
+          _hmAnswerSlots(),
+          if (!_solved && !_failed && _attempts > 0) ...[
+            const SizedBox(height: 6),
+            Text('ATT $_attempts / 3',
+                style: AppText.mono(size: 10, color: AppColors.red)),
+          ],
+          const SizedBox(height: 16),
+          if (!_solved && !_failed) _hmKeypad(),
+          SizedBox(height: 60, child: _binaryFeedback()),
+          const Spacer(),
+        ],
+      ),
+    );
+  }
+
+  Widget _hmAnswerSlots() {
+    String? hi;
+    String? lo;
+    if (_solved || _failed) {
+      hi = _hmIs4bit ? null : _target.toRadixString(16).padLeft(2, '0')
+          .substring(0, 1).toUpperCase();
+      lo = _hmIs4bit
+          ? _target.toRadixString(16).toUpperCase()
+          : _target.toRadixString(16).padLeft(2, '0')
+              .substring(1).toUpperCase();
+    } else {
+      hi = _hmIs4bit
+          ? null
+          : _hmHighEntry?.toRadixString(16).toUpperCase();
+      lo = null;
+    }
+
+    if (_hmIs4bit) {
+      return _hmSlot(lo, highlight: _solved || _failed);
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _hmSlot(hi,
+            highlight:
+                _solved || _failed || (_hmHighEntry != null && !_hmWrong)),
+        const SizedBox(width: 12),
+        _hmSlot(lo, highlight: _solved || _failed),
+        const SizedBox(width: 18),
+        GestureDetector(
+          onTap: _hmBackspace,
+          child: Text('←',
+              style: AppText.mono(
+                  size: 20,
+                  color: (!_solved && !_failed && _hmHighEntry != null)
+                      ? AppColors.g4
+                      : AppColors.g1)),
+        ),
+      ],
+    );
+  }
+
+  Widget _hmSlot(String? char, {bool highlight = false}) {
+    final borderColor =
+        _hmWrong ? AppColors.red : (highlight ? AppColors.g4 : AppColors.g2);
+    return Container(
+      width: 48,
+      height: 48,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        border: Border.all(color: borderColor, width: highlight ? 2 : 1),
+      ),
+      child: Text(char ?? '_',
+          style: AppText.mono(
+              size: 24,
+              color: char != null ? AppColors.g4 : AppColors.g1,
+              weight: FontWeight.w700)),
+    );
+  }
+
+  Widget _hmKeypad() {
+    const labels = '0123456789ABCDEF';
+    return Column(
+      children: [
+        for (int row = 0; row < 4; row++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (int col = 0; col < 4; col++)
+                  _hmKey(labels[row * 4 + col], row * 4 + col),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _hmKey(String label, int value) {
+    return GestureDetector(
+      onTap: () => _hmTap(value),
+      child: Container(
+        width: 54,
+        height: 36,
+        margin: const EdgeInsets.symmetric(horizontal: 3),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(border: Border.all(color: AppColors.g2)),
+        child: Text(label,
+            style: AppText.mono(
+                size: 14, color: AppColors.g4, weight: FontWeight.w500)),
+      ),
+    );
+  }
 
   // ── Binary game (match + reverse) ─────────────────────────────
 
@@ -662,9 +1146,12 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
 
   Widget _modeLabel() {
     final label = switch (_mode) {
-      _QMode.match   => 'MATCH',
-      _QMode.reverse => 'REVERSE',
-      _QMode.hexWord => 'HEX WORD',
+      _QMode.match    => 'MATCH',
+      _QMode.reverse  => 'REVERSE',
+      _QMode.hexWord  => 'HEX WORD',
+      _QMode.addition => 'ADDITION',
+      _QMode.xor      => 'XOR',
+      _QMode.hexMatch => 'HEX MATCH',
     };
     final sub =
         _mode != _QMode.hexWord ? '$_qBits-BIT  ·  ' : '';
@@ -805,9 +1292,12 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
 
   Widget _resultsGrid() {
     const modeChar = {
-      _QMode.match:   'M',
-      _QMode.reverse: 'R',
-      _QMode.hexWord: 'W',
+      _QMode.match:    'M',
+      _QMode.reverse:  'R',
+      _QMode.hexWord:  'W',
+      _QMode.addition: 'A',
+      _QMode.xor:      'X',
+      _QMode.hexMatch: 'H',
     };
     return Wrap(
       spacing: 8,
