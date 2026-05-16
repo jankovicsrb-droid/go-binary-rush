@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import '../widgets/bit_row.dart';
 import '../theme.dart';
 
-const _green = AppColors.g4;
-const _dimGreen = AppColors.g2;
-const _muteGreen = AppColors.g1;
-const _yellow = AppColors.amber;
+Color get _green => AppColors.g4;
+Color get _dimGreen => AppColors.g2;
+Color get _muteGreen => AppColors.g1;
+Color get _yellow => AppColors.amber;
 
 class ReferenceScreen extends StatelessWidget {
   const ReferenceScreen({super.key});
@@ -62,7 +62,7 @@ class ReferenceScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 10, color: _dimGreen, letterSpacing: 4)),
         const SizedBox(height: 6),
         Container(height: 1, color: _muteGreen),
@@ -76,7 +76,7 @@ class ReferenceScreen extends StatelessWidget {
       children: [
         for (int bits = 4; bits <= 8; bits += 1) ...[
           Text('$bits-bit',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 11, color: _dimGreen, letterSpacing: 1)),
           const SizedBox(height: 6),
           BitRow(
@@ -103,12 +103,12 @@ class ReferenceScreen extends StatelessWidget {
           child: Row(
             children: [
               Text(bitStr,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 15, color: _green, letterSpacing: 3)),
-              const Text('  =  ',
+              Text('  =  ',
                   style: TextStyle(fontSize: 13, color: _dimGreen)),
               Text('$i',
-                  style: const TextStyle(fontSize: 15, color: _green)),
+                  style: TextStyle(fontSize: 15, color: _green)),
             ],
           ),
         );
@@ -156,12 +156,12 @@ class ReferenceScreen extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
               '${row[0]}  ⊕  ${row[1]}  =  ${row[2]}',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 18, color: _green, letterSpacing: 4),
             ),
           ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'XOR = 1 when bits differ,  0 when equal',
           style: TextStyle(fontSize: 10, color: _dimGreen, letterSpacing: 1),
         ),

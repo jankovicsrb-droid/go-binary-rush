@@ -9,9 +9,9 @@ import '../widgets/game_pips.dart';
 import '../widgets/new_best_banner.dart';
 import '../theme.dart';
 
-const _green = AppColors.g4;
-const _dimGreen = AppColors.g2;
-const _muteGreen = AppColors.g1;
+Color get _green => AppColors.g4;
+Color get _dimGreen => AppColors.g2;
+Color get _muteGreen => AppColors.g1;
 
 class AdditionScreen extends StatefulWidget {
   const AdditionScreen({super.key});
@@ -153,7 +153,7 @@ class _AdditionScreenState extends State<AdditionScreen>
   @override
   Widget build(BuildContext context) {
     if (!_loaded) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: Colors.black,
         body: Center(child: CircularProgressIndicator(color: _green)),
       );
@@ -169,8 +169,8 @@ class _AdditionScreenState extends State<AdditionScreen>
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        iconTheme: const IconThemeData(color: _dimGreen),
-        title: const Text('GO BINARY RUSH',
+        iconTheme: IconThemeData(color: _dimGreen),
+        title: Text('GO BINARY RUSH',
             style: TextStyle(color: _green, fontSize: 15, letterSpacing: 4)),
         centerTitle: false,
         bottom: PreferredSize(

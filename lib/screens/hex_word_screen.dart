@@ -188,7 +188,7 @@ class _HexWordScreenState extends State<HexWordScreen>
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.g2),
+        iconTheme: IconThemeData(color: AppColors.g2),
         title: Text('HEX WORD', style: AppText.label()),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),

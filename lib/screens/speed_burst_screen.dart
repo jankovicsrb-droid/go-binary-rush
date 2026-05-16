@@ -11,11 +11,11 @@ import '../widgets/new_best_banner.dart';
 import '../widgets/num_pad.dart';
 import '../theme.dart';
 
-const _green = AppColors.g4;
-const _dimGreen = AppColors.g2;
-const _muteGreen = AppColors.g1;
-const _yellow = AppColors.amber;
-const _red = AppColors.red;
+Color get _green => AppColors.g4;
+Color get _dimGreen => AppColors.g2;
+Color get _muteGreen => AppColors.g1;
+Color get _yellow => AppColors.amber;
+Color get _red => AppColors.red;
 
 enum _SBMode { match, reverse, addition, xor, hexWord }
 
@@ -345,8 +345,8 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
   AppBar _appBar() => AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        iconTheme: const IconThemeData(color: _dimGreen),
-        title: const Text('SPEED BURST',
+        iconTheme: IconThemeData(color: _dimGreen),
+        title: Text('SPEED BURST',
             style: TextStyle(color: _green, fontSize: 15, letterSpacing: 4)),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -366,11 +366,11 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 24),
-            const Text('SELECT MODE',
+            Text('SELECT MODE',
                 style: TextStyle(
                     fontSize: 10, color: _dimGreen, letterSpacing: 5)),
             const SizedBox(height: 4),
-            const Text('60 SECONDS  ·  MAXIMIZE SOLVED',
+            Text('60 SECONDS  ·  MAXIMIZE SOLVED',
                 style: TextStyle(
                     fontSize: 10, color: _muteGreen, letterSpacing: 2)),
             const SizedBox(height: 32),
@@ -390,17 +390,17 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
       child: Row(
         children: [
           Text('[${m.index + 1}]',
-              style: const TextStyle(
+              style: TextStyle(
                   color: _green, fontSize: 13, letterSpacing: 1)),
           const SizedBox(width: 14),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(m.label,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: _green, fontSize: 15, letterSpacing: 3)),
               Text(m.subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: _dimGreen, fontSize: 10, letterSpacing: 1)),
             ],
           ),
@@ -446,9 +446,9 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
       _timerSection(),
       const SizedBox(height: 12),
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        const Text('SOLVED  ',
+        Text('SOLVED  ',
             style: TextStyle(fontSize: 10, color: _dimGreen, letterSpacing: 3)),
-        Text('$_solved', style: const TextStyle(fontSize: 20, color: _green)),
+        Text('$_solved', style: TextStyle(fontSize: 20, color: _green)),
       ]),
     ];
 
@@ -570,12 +570,12 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
   }
 
   Widget _matchUI() => Column(children: [
-        const Text('TARGET',
+        Text('TARGET',
             style:
                 TextStyle(fontSize: 11, color: _dimGreen, letterSpacing: 5)),
         const SizedBox(height: 4),
         Text('$_target',
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 64,
                 color: _green,
                 fontWeight: FontWeight.bold,
@@ -589,7 +589,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
       ]);
 
   Widget _reverseUI() => Column(children: [
-        const Text('DECODE',
+        Text('DECODE',
             style:
                 TextStyle(fontSize: 11, color: _dimGreen, letterSpacing: 5)),
         const SizedBox(height: 16),
@@ -619,11 +619,11 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
   Widget _additionUI() {
     final vA = _val(_bitsA), vB = _val(_bitsB);
     return Column(children: [
-      const Text('TARGET',
+      Text('TARGET',
           style: TextStyle(fontSize: 11, color: _dimGreen, letterSpacing: 5)),
       const SizedBox(height: 4),
       Text('$_target',
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 56,
               color: _green,
               fontWeight: FontWeight.bold,
@@ -641,10 +641,10 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Text(lbl,
             style:
-                const TextStyle(fontSize: 11, color: _dimGreen, letterSpacing: 2)),
+                TextStyle(fontSize: 11, color: _dimGreen, letterSpacing: 2)),
         const SizedBox(width: 8),
         Text('= $v',
-            style: const TextStyle(fontSize: 16, color: _dimGreen)),
+            style: TextStyle(fontSize: 16, color: _dimGreen)),
       ]),
       const SizedBox(height: 4),
       BitRow(
@@ -658,7 +658,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
   Widget _xorUI() {
     final vC = _val(_xorC);
     return Column(children: [
-      const Text('A  ⊕  B  =  C',
+      Text('A  ⊕  B  =  C',
           style:
               TextStyle(fontSize: 12, color: _dimGreen, letterSpacing: 3)),
       const SizedBox(height: 14),
@@ -671,7 +671,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
       ),
       Column(children: [
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          const SizedBox(
+          SizedBox(
               width: 20,
               child: Text('C',
                   style: TextStyle(
@@ -685,7 +685,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
         ]),
         const SizedBox(height: 6),
         Text('= $vC',
-            style: const TextStyle(fontSize: 16, color: _dimGreen)),
+            style: TextStyle(fontSize: 16, color: _dimGreen)),
       ]),
     ]);
   }
@@ -695,7 +695,7 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
       SizedBox(
           width: 20,
           child: Text(lbl,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 11, color: _dimGreen, letterSpacing: 2))),
       const SizedBox(width: 8),
       BitRow(bits: bits, onToggle: (_) {}, enabled: false),
@@ -712,27 +712,27 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text("TIME'S UP",
+            Text("TIME'S UP",
                 style: TextStyle(
                     fontSize: 16, color: _dimGreen, letterSpacing: 6)),
             const SizedBox(height: 20),
             Text('$_solved',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 96,
                     color: _green,
                     fontWeight: FontWeight.bold,
                     height: 1.0)),
-            const Text('SOLVED',
+            Text('SOLVED',
                 style: TextStyle(
                     fontSize: 11, color: _dimGreen, letterSpacing: 5)),
             const SizedBox(height: 28),
             if (_newHighScore)
-              const Text('NEW BEST  ▲',
+              Text('NEW BEST  ▲',
                   style: TextStyle(
                       fontSize: 13, color: _green, letterSpacing: 4))
             else
               Text('BEST  $_highScore',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 13, color: _dimGreen, letterSpacing: 3)),
             const SizedBox(height: 44),
             _btn('PLAY AGAIN', _green, () => _startMode(_mode)),

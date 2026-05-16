@@ -16,7 +16,7 @@ class HowToPlayScreen extends StatelessWidget {
         backgroundColor: Colors.black,
         elevation: 0,
         automaticallyImplyLeading: !isFirstLaunch,
-        iconTheme: const IconThemeData(color: AppColors.g2),
+        iconTheme: IconThemeData(color: AppColors.g2),
         title: Text('HOW TO PLAY', style: AppText.label()),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),

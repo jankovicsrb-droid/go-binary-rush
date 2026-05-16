@@ -8,10 +8,10 @@ import '../widgets/bit_row.dart';
 import '../widgets/new_best_banner.dart';
 import '../theme.dart';
 
-const _green = AppColors.g4;
-const _dimGreen = AppColors.g2;
-const _muteGreen = AppColors.g1;
-const _red = AppColors.red;
+Color get _green => AppColors.g4;
+Color get _dimGreen => AppColors.g2;
+Color get _muteGreen => AppColors.g1;
+Color get _red => AppColors.red;
 
 class HexScreen extends StatefulWidget {
   const HexScreen({super.key});
@@ -161,7 +161,7 @@ class _HexScreenState extends State<HexScreen>
   @override
   Widget build(BuildContext context) {
     if (!_loaded) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: Colors.black,
         body: Center(child: CircularProgressIndicator(color: _green)),
       );
@@ -175,8 +175,8 @@ class _HexScreenState extends State<HexScreen>
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        iconTheme: const IconThemeData(color: _dimGreen),
-        title: const Text(
+        iconTheme: IconThemeData(color: _dimGreen),
+        title: Text(
           'HEX MATCH',
           style: TextStyle(color: _green, fontSize: 15, letterSpacing: 4),
         ),
@@ -220,7 +220,7 @@ class _HexScreenState extends State<HexScreen>
   Widget _bitDisplay() {
     return Column(
       children: [
-        const Text(
+        Text(
           'BINARY',
           style: TextStyle(fontSize: 11, color: _dimGreen, letterSpacing: 5),
         ),
@@ -317,7 +317,8 @@ class _HexScreenState extends State<HexScreen>
             child: Text(
               '= $hexStr',
               style:
-                  const TextStyle(fontSize: 22, color: _green, letterSpacing: 4),
+                  TextStyle(fontSize: 22, color: _green, letterSpacing: 4),
+
             ),
           ),
         ),
@@ -326,7 +327,7 @@ class _HexScreenState extends State<HexScreen>
           scale: _scaleAnim,
           child: FadeTransition(
             opacity: _pulseAnim,
-            child: const Text(
+            child: Text(
               'CORRECT',
               style: TextStyle(fontSize: 26, color: _green, letterSpacing: 8),
             ),
@@ -339,7 +340,7 @@ class _HexScreenState extends State<HexScreen>
             padding:
                 const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
             decoration: BoxDecoration(border: Border.all(color: _green)),
-            child: const Text(
+            child: Text(
               'NEXT  →',
               style:
                   TextStyle(fontSize: 15, color: _green, letterSpacing: 5),
@@ -380,7 +381,7 @@ class _HexScreenState extends State<HexScreen>
         decoration: BoxDecoration(border: Border.all(color: _dimGreen)),
         child: Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 16, color: _green, letterSpacing: 1),
         ),
       ),
@@ -403,15 +404,15 @@ class _HexScreenState extends State<HexScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text('TIER',
+        Text('TIER',
             style:
                 TextStyle(fontSize: 9, color: _dimGreen, letterSpacing: 2)),
         const SizedBox(height: 2),
         Text('T${gen.currentTier}',
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 14, color: _green, letterSpacing: 1)),
         Text('${gen.tierSolvedCount}/${gen.tierCap}',
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 8, color: _dimGreen, letterSpacing: 1)),
       ],
     );
@@ -422,11 +423,11 @@ class _HexScreenState extends State<HexScreen>
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(label,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 9, color: _dimGreen, letterSpacing: 2)),
         const SizedBox(height: 2),
         Text(value,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 14, color: _green, letterSpacing: 1)),
       ],
     );

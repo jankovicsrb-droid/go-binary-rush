@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/crt_settings.dart';
 import '../services/haptics.dart';
 import '../services/notifications.dart';
+import '../services/palette_settings.dart';
 import '../theme.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -29,6 +30,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _reminderHour = Notifications.defaultHour;
   bool _hapticsEnabled = true;
   int _crtLevel = CrtSettings.levelFull;
+  int _paletteIndex = PaletteSettings.indexGreen;
 
   @override
   void initState() {
@@ -84,6 +86,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _reminderHour = prefs.getInt(Notifications.prefsHour) ?? Notifications.defaultHour;
       _hapticsEnabled = prefs.getBool(Haptics.prefsEnabled) ?? true;
       _crtLevel = prefs.getInt(CrtSettings.prefsLevel) ?? CrtSettings.levelFull;
+      _paletteIndex = prefs.getInt(PaletteSettings.prefsIndex) ?? PaletteSettings.indexGreen;
       _loaded = true;
     });
   }
@@ -233,6 +236,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   },
                 ),
                 _crtRow(),
+                _paletteRow(),
                 if (!kIsWeb) ...[
                   _toggleRow(
                     'DAILY REMINDER',
@@ -243,6 +247,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ],
             ),
+    );
+  }
+
+  Widget _paletteRow() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('PALETTE',
+              style: AppText.mono(size: 12, color: AppColors.g2)),
+          const SizedBox(height: 6),
+          Row(
+            children: List.generate(PaletteSettings.labels.length, (i) {
+              final sel = i == _paletteIndex;
+              return Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () async {
+                    setState(() => _paletteIndex = i);
+                    await PaletteSettings.setIndex(i);
+                  },
+                  child: Container(
+                    margin: EdgeInsets.only(
+                        right: i == PaletteSettings.labels.length - 1 ? 0 : 6),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                          color: sel ? AppColors.g4 : AppColors.g1),
+                      color: sel ? AppColors.g1 : Colors.transparent,
+                    ),
+                    child: Text(
+                      PaletteSettings.labels[i],
+                      style: AppText.mono(
+                        size: 11,
+                        color: sel ? AppColors.g5 : AppColors.g3,
+                        weight: sel ? FontWeight.w700 : FontWeight.normal,
+                      ).copyWith(letterSpacing: 2),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
     );
   }
 

@@ -72,9 +72,9 @@ class _NameEntryScreenState extends State<NameEntryScreen> {
                   counterText: '',
                   hintText: 'CALLSIGN',
                   hintStyle: AppText.mono(size: 30, color: AppColors.g1),
-                  enabledBorder: const UnderlineInputBorder(
+                  enabledBorder: UnderlineInputBorder(
                       borderSide: BorderSide(color: AppColors.g2)),
-                  focusedBorder: const UnderlineInputBorder(
+                  focusedBorder: UnderlineInputBorder(
                       borderSide: BorderSide(color: AppColors.g4, width: 2)),
                 ),
                 inputFormatters: [

@@ -8,7 +8,7 @@ class NumPad extends StatelessWidget {
   final double keyHeight;
   final double hMargin;
   final double rowPadding;
-  final Color activeTextColor;
+  final Color? activeTextColor;
 
   const NumPad({
     super.key,
@@ -18,7 +18,7 @@ class NumPad extends StatelessWidget {
     this.keyHeight = 44,
     this.hMargin = 6,
     this.rowPadding = 6,
-    this.activeTextColor = AppColors.g4,
+    this.activeTextColor,
   });
 
   static const _rows = [
@@ -31,7 +31,7 @@ class NumPad extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final borderColor = disabled ? AppColors.g1 : AppColors.g2;
-    final textColor = disabled ? AppColors.g1 : activeTextColor;
+    final textColor = disabled ? AppColors.g1 : (activeTextColor ?? AppColors.g4);
     final textSize = (keyHeight * 0.41).clamp(14.0, 20.0);
     return Column(
       children: _rows

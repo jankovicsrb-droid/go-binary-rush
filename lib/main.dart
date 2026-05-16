@@ -7,6 +7,7 @@ import 'screens/name_entry_screen.dart';
 import 'services/crt_settings.dart';
 import 'services/haptics.dart';
 import 'services/notifications.dart';
+import 'services/palette_settings.dart';
 import 'theme.dart';
 import 'widgets/crt_overlay.dart';
 
@@ -15,6 +16,7 @@ void main() {
   GoogleFonts.config.allowRuntimeFetching = false;
   Haptics.init();
   CrtSettings.init();
+  PaletteSettings.init();
   if (!kIsWeb) {
     Notifications.init();
   }
@@ -26,12 +28,17 @@ class BinaryRushApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Go Binary Rush',
-      debugShowCheckedModeBanner: false,
-      theme: buildAppTheme(),
-      builder: (context, child) => CrtOverlay(child: child!),
-      home: const _AppRouter(),
+    return ValueListenableBuilder<int>(
+      valueListenable: PaletteSettings.index,
+      builder: (context, _, child) {
+        return MaterialApp(
+          title: 'Go Binary Rush',
+          debugShowCheckedModeBanner: false,
+          theme: buildAppTheme(),
+          builder: (context, child) => CrtOverlay(child: child!),
+          home: const _AppRouter(),
+        );
+      },
     );
   }
 }

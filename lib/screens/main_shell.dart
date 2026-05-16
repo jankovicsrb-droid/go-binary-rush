@@ -58,7 +58,7 @@ class _TerminalDock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.black,
         border: Border(top: BorderSide(color: AppColors.g1)),
       ),

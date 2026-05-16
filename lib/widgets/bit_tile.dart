@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
 
-const _active = AppColors.g4;
-const _activeBg = AppColors.g0;
-const _inactiveBorder = AppColors.g1;
-const _inactiveText = AppColors.g2;
+Color get _active => AppColors.g4;
+Color get _activeBg => AppColors.g0;
+Color get _inactiveBorder => AppColors.g1;
+Color get _inactiveText => AppColors.g2;
 
 class BitTile extends StatefulWidget {
   final int value;

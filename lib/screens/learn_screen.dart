@@ -84,7 +84,7 @@ class _LearnScreenState extends State<LearnScreen> {
         backgroundColor: Colors.black,
         elevation: 0,
         automaticallyImplyLeading: !widget.isFirstLaunch,
-        iconTheme: const IconThemeData(color: AppColors.g2),
+        iconTheme: IconThemeData(color: AppColors.g2),
         title: Text('LEARN', style: AppText.label()),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),

@@ -345,7 +345,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.g2),
+        iconTheme: IconThemeData(color: AppColors.g2),
         title: Text('DAILY CHALLENGE', style: AppText.label()),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
