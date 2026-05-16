@@ -22,8 +22,13 @@ class _HexWordScreenState extends State<HexWordScreen>
   ScoreEngine? _score;
   SharedPreferences? _prefs;
 
+  static const int _minWordLen = 3;
+  static const int _maxWordLen = 8;
+  static const int _wordsPerStep = 10;
+
   List<String> _pool = [];
   int _poolIdx = 0;
+  int _currentMaxLen = 0;
   String _word = '';
   List<String> _cachedHexPairs = [];
   int _revealed = 0;
@@ -67,17 +72,31 @@ class _HexWordScreenState extends State<HexWordScreen>
     ]);
     final score = results[0] as ScoreEngine;
     final prefs = results[1] as SharedPreferences;
-    final pool = List<String>.from(kWordList)..shuffle(Random());
     setState(() {
       _score = score;
       _prefs = prefs;
-      _pool = pool;
-      _poolIdx = 0;
     });
     _loadWord();
   }
 
+  void _refreshPoolForCurrentRamp() {
+    final p = _prefs;
+    if (p == null) return;
+    final total = p.getInt('hex_word_total') ?? 0;
+    final ramp = ((total ~/ _wordsPerStep) + _minWordLen)
+        .clamp(_minWordLen, _maxWordLen);
+    if (ramp == _currentMaxLen && _pool.isNotEmpty) return;
+    _currentMaxLen = ramp;
+    _pool = kWordList
+        .where((w) => w.length >= _minWordLen && w.length <= ramp)
+        .toList()
+      ..shuffle(Random());
+    _poolIdx = 0;
+    p.setInt('hex_word_max_len', ramp);
+  }
+
   void _loadWord() {
+    _refreshPoolForCurrentRamp();
     if (_pool.isEmpty) return;
     final word = _pool[_poolIdx % _pool.length];
     setState(() {
