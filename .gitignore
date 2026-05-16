@@ -1,6 +1,13 @@
 # Claude Code
 .claude/
 
+# Release signing — keystore credentials, never commit
+android/key.properties
+
+# Icon generation tooling (npm/sharp)
+assets/icon/node_modules/
+assets/icon/package-lock.json
+
 # Miscellaneous
 *.class
 *.log
