@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/notifications.dart';
 import '../theme.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -18,6 +19,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, int> _bests = {};
   Map<String, int> _speedBests = {};
   bool _loaded = false;
+  bool _reminderEnabled = false;
+  bool _reminderBusy = false;
 
   @override
   void initState() {
@@ -54,8 +57,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'XOR':      prefs.getInt('speed_xor_high_score') ?? 0,
         'HEX WORD': prefs.getInt('speed_hexWord_high_score') ?? 0,
       };
+      _reminderEnabled = prefs.getBool(Notifications.prefsEnabled) ?? false;
       _loaded = true;
     });
+  }
+
+  Future<void> _toggleReminder(bool value) async {
+    if (_reminderBusy) return;
+    setState(() => _reminderBusy = true);
+    if (value) {
+      final granted = await Notifications.enable(_playerName);
+      if (mounted) {
+        setState(() {
+          _reminderEnabled = granted;
+          _reminderBusy = false;
+        });
+        if (!granted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: AppColors.bg,
+            content: Text(
+              'NOTIFICATION PERMISSION DENIED',
+              style: AppText.mono(size: 12, color: AppColors.amber),
+            ),
+          ));
+        }
+      }
+    } else {
+      await Notifications.disable();
+      if (mounted) {
+        setState(() {
+          _reminderEnabled = false;
+          _reminderBusy = false;
+        });
+      }
+    }
   }
 
   @override
@@ -98,8 +133,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _divider('SPEED BURST'),
                 const SizedBox(height: 14),
                 ..._speedBests.entries.map((e) => _statRow(e.key, e.value > 0 ? '${e.value}' : '—')),
+                const SizedBox(height: 28),
+                _divider('SETTINGS'),
+                const SizedBox(height: 14),
+                _toggleRow(
+                  'DAILY REMINDER  ·  19:00',
+                  _reminderEnabled,
+                  _toggleReminder,
+                ),
               ],
             ),
+    );
+  }
+
+  Widget _toggleRow(String label, bool value, ValueChanged<bool> onChanged) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: AppText.mono(size: 12, color: AppColors.g2)),
+          Switch(
+            value: value,
+            onChanged: _reminderBusy ? null : onChanged,
+            activeThumbColor: AppColors.g4,
+            activeTrackColor: AppColors.g1,
+            inactiveThumbColor: AppColors.g1,
+            inactiveTrackColor: AppColors.bg,
+          ),
+        ],
+      ),
     );
   }
 

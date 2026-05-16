@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../game/word_list.dart';
+import '../services/notifications.dart';
 import '../widgets/bit_row.dart';
 import '../widgets/hex_word_keyboard.dart';
 import '../widgets/num_pad.dart';
@@ -305,6 +306,9 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
     }
     _prefs!.setInt('daily_streak', streak);
     _prefs!.setString('daily_last_date', _dateKey);
+
+    final agent = _prefs!.getString('player_name') ?? '';
+    Notifications.reschedule(agent.toUpperCase());
 
     setState(() {
       _done = true;
