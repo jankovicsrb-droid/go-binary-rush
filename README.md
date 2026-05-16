@@ -52,22 +52,6 @@ First-time players go through an interactive 6-page LEARN screen covering binary
 - `google_fonts` — JetBrains Mono
 - No backend, no analytics, no ads
 
-## Build
-
-```bash
-# Debug
-flutter run
-
-# Release APK (fat, all ABIs)
-flutter build apk --release
-
-# Release APK (split per ABI — smaller)
-flutter build apk --split-per-abi --release
-
-# App Bundle (Play Store)
-flutter build appbundle --release
-```
-
 ## Privacy
 
 No personal data collected or transmitted. All data stored locally on device.  
