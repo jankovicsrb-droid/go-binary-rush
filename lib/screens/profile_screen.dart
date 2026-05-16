@@ -22,6 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _loaded = false;
   bool _reminderEnabled = false;
   bool _reminderBusy = false;
+  int _reminderHour = Notifications.defaultHour;
 
   @override
   void initState() {
@@ -59,8 +60,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'HEX WORD': prefs.getInt('speed_hexWord_high_score') ?? 0,
       };
       _reminderEnabled = prefs.getBool(Notifications.prefsEnabled) ?? false;
+      _reminderHour = prefs.getInt(Notifications.prefsHour) ?? Notifications.defaultHour;
       _loaded = true;
     });
+  }
+
+  Future<void> _pickHour() async {
+    final picked = await showDialog<int>(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: AppColors.bg,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: AppColors.g2),
+          borderRadius: BorderRadius.zero,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('REMINDER HOUR', style: AppText.label()),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: List.generate(24, (h) {
+                  final sel = h == _reminderHour;
+                  return GestureDetector(
+                    onTap: () => Navigator.of(ctx).pop(h),
+                    child: Container(
+                      width: 48,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: sel ? AppColors.g4 : AppColors.g1,
+                        ),
+                        color: sel ? AppColors.g1 : Colors.transparent,
+                      ),
+                      child: Text(
+                        '${h.toString().padLeft(2, '0')}:00',
+                        style: AppText.mono(
+                          size: 11,
+                          color: sel ? AppColors.g5 : AppColors.g3,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (picked == null || picked == _reminderHour) return;
+    setState(() => _reminderHour = picked);
+    await Notifications.setHour(picked, _playerName);
   }
 
   Future<void> _toggleReminder(bool value) async {
@@ -139,13 +195,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _divider('SETTINGS'),
                   const SizedBox(height: 14),
                   _toggleRow(
-                    'DAILY REMINDER  ·  19:00',
+                    'DAILY REMINDER',
                     _reminderEnabled,
                     _toggleReminder,
                   ),
+                  if (_reminderEnabled) _hourRow(),
                 ],
               ],
             ),
+    );
+  }
+
+  Widget _hourRow() {
+    final hh = '${_reminderHour.toString().padLeft(2, '0')}:00';
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text('REMINDER TIME',
+              style: AppText.mono(size: 12, color: AppColors.g2)),
+          GestureDetector(
+            onTap: _pickHour,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(border: Border.all(color: AppColors.g2)),
+              child: Text(hh,
+                  style: AppText.mono(
+                      size: 13,
+                      color: AppColors.g4,
+                      weight: FontWeight.w600)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

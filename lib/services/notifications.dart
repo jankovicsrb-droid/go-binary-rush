@@ -6,11 +6,12 @@ import 'package:timezone/timezone.dart' as tz;
 
 class Notifications {
   static const prefsEnabled = 'daily_reminder_enabled';
+  static const prefsHour = 'daily_reminder_hour';
+  static const defaultHour = 19;
   static const _notificationId = 1001;
   static const _channelId = 'daily_reminder';
   static const _channelName = 'Daily Reminder';
   static const _channelDesc = 'Reminds you that today\'s daily challenge is waiting';
-  static const _reminderHour = 19;
 
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
@@ -36,6 +37,11 @@ class Notifications {
   static Future<bool> isEnabled() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(prefsEnabled) ?? false;
+  }
+
+  static Future<int> getHour() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(prefsHour) ?? defaultHour;
   }
 
   static Future<bool> enable(String agentName) async {
@@ -64,10 +70,19 @@ class Notifications {
     await _schedule(agentName);
   }
 
+  static Future<void> setHour(int hour, String agentName) async {
+    final clamped = hour.clamp(0, 23);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(prefsHour, clamped);
+    await reschedule(agentName);
+  }
+
   static Future<void> _schedule(String agentName) async {
+    final prefs = await SharedPreferences.getInstance();
+    final hour = prefs.getInt(prefsHour) ?? defaultHour;
     final now = tz.TZDateTime.now(tz.local);
     var when = tz.TZDateTime(
-        tz.local, now.year, now.month, now.day, _reminderHour);
+        tz.local, now.year, now.month, now.day, hour);
     if (!when.isAfter(now)) {
       when = when.add(const Duration(days: 1));
     }
