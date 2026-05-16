@@ -96,7 +96,9 @@ class _AdditionScreenState extends State<AdditionScreen>
     newBits[index] = newBits[index] == 0 ? 1 : 0;
     update(newBits);
     setState(() {});
-    if (_computeValue(_bitsA) + _computeValue(_bitsB) == _target) {
+    final valA = _computeValue(_bitsA);
+    final valB = _computeValue(_bitsB);
+    if (valA + valB == _target && valA > 0 && valB > 0) {
       _triggerSuccess();
     }
   }
@@ -269,6 +271,10 @@ class _AdditionScreenState extends State<AdditionScreen>
             style: AppText.kicker(color: AppColors.g2).copyWith(letterSpacing: 5)),
         const SizedBox(height: 4),
         Text('$_target', style: AppText.bigTarget()),
+        const SizedBox(height: 6),
+        Text('A > 0   +   B > 0',
+            style: AppText.kicker(color: AppColors.g2)
+                .copyWith(letterSpacing: 3)),
       ],
     );
   }

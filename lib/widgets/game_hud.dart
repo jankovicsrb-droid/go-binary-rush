@@ -11,12 +11,17 @@ class GameHud extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final streakWarn = score.wrongsInRow >= 1;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         _tierCell(),
         _cell('SCORE', '${score.score}'),
-        _cell('STREAK', '×${score.streak}'),
+        _cell(
+          'STREAK',
+          '×${score.streak}',
+          valueColor: streakWarn ? AppColors.amber : null,
+        ),
         _cell('BEST', '${score.highScore}'),
       ],
     );
@@ -35,13 +40,19 @@ class GameHud extends StatelessWidget {
     );
   }
 
-  Widget _cell(String label, String value) {
+  Widget _cell(String label, String value, {Color? valueColor}) {
+    final baseStyle = AppText.hudValue();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(label, style: AppText.kicker()),
         const SizedBox(height: 2),
-        Text(value, style: AppText.hudValue()),
+        Text(
+          value,
+          style: valueColor != null
+              ? baseStyle.copyWith(color: valueColor)
+              : baseStyle,
+        ),
       ],
     );
   }

@@ -121,6 +121,7 @@ class _HexScreenState extends State<HexScreen>
 
   void _onWrong() {
     HapticFeedback.lightImpact();
+    _scoreEngine!.onWrong();
     setState(() {
       _wrong = true;
       _highEntry = null;
@@ -214,17 +215,14 @@ class _HexScreenState extends State<HexScreen>
           BitRow(
               bits: _bits, onToggle: (_) {}, enabled: false, glowing: _solved)
         else
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Column(
             children: [
               BitRow(
                   bits: _bits.sublist(0, 4),
                   onToggle: (_) {},
                   enabled: false,
                   glowing: _solved),
-              const SizedBox(width: 10),
-              Container(width: 1, height: 48, color: _muteGreen),
-              const SizedBox(width: 10),
+              const SizedBox(height: 8),
               BitRow(
                   bits: _bits.sublist(4),
                   onToggle: (_) {},

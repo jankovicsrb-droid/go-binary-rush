@@ -99,6 +99,7 @@ class _ReverseScreenState extends State<ReverseScreen>
       _inputEntry = next;
       _onCorrect();
     } else if (next.length >= _target.toString().length) {
+      _scoreEngine!.onWrong();
       setState(() { _wrong = true; _inputEntry = ''; });
       Future.delayed(const Duration(milliseconds: 700), () {
         if (mounted) setState(() => _wrong = false);

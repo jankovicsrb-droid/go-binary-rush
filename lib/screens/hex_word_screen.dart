@@ -97,6 +97,7 @@ class _HexWordScreenState extends State<HexWordScreen>
       if (_revealed == _word.length) _triggerSolved();
     } else {
       _score!.onWrongLetter();
+      _score!.onWrong();
       HapticFeedback.lightImpact();
       _wrongTimer?.cancel();
       setState(() {

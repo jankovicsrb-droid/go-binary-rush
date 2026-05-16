@@ -16,7 +16,11 @@ class ScoreEngine {
     return ScoreEngine._(prefs, mode);
   }
 
+  int _wrongsInRow = 0;
+  int get wrongsInRow => _wrongsInRow;
+
   int onCorrect() {
+    _wrongsInRow = 0;
     streak++;
     final earned = 10 + (streak - 1) * 5;
     score += earned;
@@ -28,6 +32,17 @@ class ScoreEngine {
     final bestStreak = _prefs.getInt('best_streak_ever') ?? 0;
     if (streak > bestStreak) _prefs.setInt('best_streak_ever', streak);
     return earned;
+  }
+
+  /// Returns true if the streak was just broken by this call.
+  bool onWrong() {
+    _wrongsInRow++;
+    if (_wrongsInRow >= 2 && streak > 0) {
+      streak = 0;
+      _wrongsInRow = 0;
+      return true;
+    }
+    return false;
   }
 
   void onHint() {
