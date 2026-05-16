@@ -1,11 +1,11 @@
 {
-    "name": "binary_game",
-    "short_name": "binary_game",
+    "name": "Go Binary Rush",
+    "short_name": "Go Binary Rush",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#000000",
+    "theme_color": "#7DFF97",
+    "description": "Fast-paced binary number puzzle game. Eight modes built around binary and hex manipulation. Hacker terminal aesthetic.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
