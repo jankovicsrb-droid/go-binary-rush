@@ -337,7 +337,7 @@ class _GameScreenState extends State<GameScreen>
               ),
               child: Text('NEXT  →',
                   style: AppText.mono(size: 13, color: AppColors.g3,
-                      weight: FontWeight.w500)
+                      weight: FontWeight.w600)
                       .copyWith(letterSpacing: 4)),
             ),
           ),

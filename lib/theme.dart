@@ -121,6 +121,44 @@ class AppText {
 }
 
 // ── Theme ─────────────────────────────────────────────────────
+
+// Only Regular (w400), SemiBold (w600), Bold (w700) JetBrainsMono ttf's are
+// bundled in google_fonts/. Material's default TextTheme uses w500 (Medium)
+// for several roles; with runtime fetch disabled that would throw. Snap any
+// requested weight to the nearest bundled neighbour.
+FontWeight _snapToBundledWeight(FontWeight? w) {
+  if (w == null) return FontWeight.w400;
+  final v = w.value;
+  if (v <= 400) return FontWeight.w400;
+  if (v <= 600) return FontWeight.w600;
+  return FontWeight.w700;
+}
+
+TextStyle? _safeStyle(TextStyle? s) {
+  if (s == null) return null;
+  return s.copyWith(fontWeight: _snapToBundledWeight(s.fontWeight));
+}
+
+TextTheme _normalizeWeights(TextTheme base) {
+  return TextTheme(
+    displayLarge:   _safeStyle(base.displayLarge),
+    displayMedium:  _safeStyle(base.displayMedium),
+    displaySmall:   _safeStyle(base.displaySmall),
+    headlineLarge:  _safeStyle(base.headlineLarge),
+    headlineMedium: _safeStyle(base.headlineMedium),
+    headlineSmall:  _safeStyle(base.headlineSmall),
+    titleLarge:     _safeStyle(base.titleLarge),
+    titleMedium:    _safeStyle(base.titleMedium),
+    titleSmall:     _safeStyle(base.titleSmall),
+    bodyLarge:      _safeStyle(base.bodyLarge),
+    bodyMedium:     _safeStyle(base.bodyMedium),
+    bodySmall:      _safeStyle(base.bodySmall),
+    labelLarge:     _safeStyle(base.labelLarge),
+    labelMedium:    _safeStyle(base.labelMedium),
+    labelSmall:     _safeStyle(base.labelSmall),
+  );
+}
+
 ThemeData buildAppTheme() {
   final base = ThemeData.dark();
   return base.copyWith(
@@ -129,7 +167,9 @@ ThemeData buildAppTheme() {
       surface: AppColors.bg,
       primary: AppColors.g4,
     ),
-    textTheme: GoogleFonts.jetBrainsMonoTextTheme(base.textTheme).apply(
+    textTheme: GoogleFonts.jetBrainsMonoTextTheme(
+      _normalizeWeights(base.textTheme),
+    ).apply(
       bodyColor: AppColors.g3,
       displayColor: AppColors.g4,
     ),

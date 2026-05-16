@@ -355,7 +355,7 @@ class _AdditionScreenState extends State<AdditionScreen>
             decoration: BoxDecoration(border: Border.all(color: AppColors.g2)),
             child: Text('NEXT  →',
                 style: AppText.mono(
-                    size: 13, color: AppColors.g3, weight: FontWeight.w500)
+                    size: 13, color: AppColors.g3, weight: FontWeight.w600)
                     .copyWith(letterSpacing: 4)),
           ),
         ),

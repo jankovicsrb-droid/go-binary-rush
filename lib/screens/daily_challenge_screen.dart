@@ -842,7 +842,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
         decoration: BoxDecoration(border: Border.all(color: AppColors.g2)),
         child: Text(label,
             style: AppText.mono(
-                size: 14, color: AppColors.g4, weight: FontWeight.w500)),
+                size: 14, color: AppColors.g4, weight: FontWeight.w600)),
       ),
     );
   }
