@@ -8,6 +8,10 @@ android/key.properties
 assets/icon/node_modules/
 assets/icon/package-lock.json
 
+# Local planning docs — keep out of the public repo
+NEXT.md
+ROADMAP.md
+
 # Miscellaneous
 *.class
 *.log
