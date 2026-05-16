@@ -2,6 +2,11 @@
 
 Fast-paced binary number puzzle game for Android. Eight game modes, all built around binary and hex manipulation. Hacker terminal aesthetic.
 
+## Play
+
+- **Web demo:** https://gojankovic.github.io/go-binary-rush/
+- **Android:** Google Play (search "Go Binary Rush")
+
 ## Modes
 
 | # | Mode | Mechanic |
@@ -61,46 +66,6 @@ flutter build apk --split-per-abi --release
 
 # App Bundle (Play Store)
 flutter build appbundle --release
-```
-
-## Project Structure
-
-```
-lib/
-  main.dart
-  theme.dart
-  screens/
-    menu_screen.dart
-    game_screen.dart          # MATCH
-    reverse_screen.dart
-    addition_screen.dart
-    xor_screen.dart
-    speed_burst_screen.dart
-    hex_screen.dart           # HEX MATCH
-    hex_word_screen.dart
-    daily_challenge_screen.dart
-    learn_screen.dart         # Interactive binary/hex/ASCII tutorial
-    how_to_play_screen.dart
-    achievements_screen.dart
-    profile_screen.dart
-    reference_screen.dart
-    name_entry_screen.dart
-    main_shell.dart
-  game/
-    question_generator.dart   # Tier-based question generation
-    score_engine.dart         # Score, streak, high score
-    difficulty.dart           # Tier definitions
-    word_list.dart            # 391 words for HEX WORD
-  widgets/
-    bit_row.dart
-    bit_tile.dart
-    num_pad.dart
-    hex_word_keyboard.dart
-    game_hud.dart
-    game_pips.dart
-    crt_overlay.dart
-docs/
-  privacy-policy.html         # Hosted via GitHub Pages for Play Store
 ```
 
 ## Privacy
