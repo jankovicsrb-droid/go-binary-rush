@@ -4,7 +4,7 @@ Fast-paced binary number puzzle game for Android. Eight game modes, all built ar
 
 ## Play
 
-- **Web demo:** https://gojankovic.github.io/go-binary-rush/
+- **Web demo:** https://jankovicsrb-droid.github.io/go-binary-rush/
 - **Android:** Google Play (search "Go Binary Rush")
 
 ## Modes
@@ -55,7 +55,7 @@ First-time players go through an interactive 6-page LEARN screen covering binary
 ## Privacy
 
 No personal data collected or transmitted. All data stored locally on device.  
-Privacy policy: https://gojankovic.github.io/go-binary-rush/privacy-policy.html
+Privacy policy: https://jankovicsrb-droid.github.io/go-binary-rush/privacy-policy.html
 
 ## License
 
