@@ -680,11 +680,13 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
                   style: TextStyle(
                       fontSize: 11, color: _dimGreen, letterSpacing: 2))),
           const SizedBox(width: 8),
-          BitRow(
-              bits: _xorC,
-              onToggle: _toggleXorC,
-              enabled: !_questionSolved,
-              glowing: _questionSolved),
+          Expanded(
+            child: BitRow(
+                bits: _xorC,
+                onToggle: _toggleXorC,
+                enabled: !_questionSolved,
+                glowing: _questionSolved),
+          ),
         ]),
         const SizedBox(height: 6),
         Text('= $vC',
@@ -701,7 +703,9 @@ class _SpeedBurstScreenState extends State<SpeedBurstScreen>
               style: TextStyle(
                   fontSize: 11, color: _dimGreen, letterSpacing: 2))),
       const SizedBox(width: 8),
-      BitRow(bits: bits, onToggle: (_) {}, enabled: false),
+      Expanded(
+        child: BitRow(bits: bits, onToggle: (_) {}, enabled: false),
+      ),
     ]);
   }
 

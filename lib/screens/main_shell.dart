@@ -29,24 +29,22 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    final screens = [
-      const MenuScreen(),
-      ProfileScreen(key: ValueKey(_profileRefresh)),
-      AchievementsScreen(key: ValueKey(_achvRefresh)),
-      const ReferenceScreen(),
-      SettingsScreen(key: ValueKey(_settingsRefresh)),
-    ];
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: ValueListenableBuilder<int>(
-        valueListenable: PaletteSettings.index,
-        builder: (context, _, _) =>
-            IndexedStack(index: _tab, children: screens),
-      ),
-      bottomNavigationBar: _TerminalDock(
-        active: _tab,
-        onTap: _onTap,
-      ),
+    return ValueListenableBuilder<int>(
+      valueListenable: PaletteSettings.index,
+      builder: (context, palette, _) {
+        final screens = [
+          MenuScreen(key: ValueKey('menu$palette')),
+          ProfileScreen(key: ValueKey(_profileRefresh)),
+          AchievementsScreen(key: ValueKey(_achvRefresh)),
+          ReferenceScreen(key: ValueKey('ref$palette')),
+          SettingsScreen(key: ValueKey(_settingsRefresh)),
+        ];
+        return Scaffold(
+          backgroundColor: Colors.black,
+          body: IndexedStack(index: _tab, children: screens),
+          bottomNavigationBar: _TerminalDock(active: _tab, onTap: _onTap),
+        );
+      },
     );
   }
 }

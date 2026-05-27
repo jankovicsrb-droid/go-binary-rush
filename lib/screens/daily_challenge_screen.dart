@@ -668,11 +668,13 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
                   child: Text('C',
                       style: AppText.kicker(color: AppColors.g2))),
               const SizedBox(width: 8),
-              BitRow(
-                  bits: _curXorC,
-                  onToggle: _toggleXorC,
-                  enabled: !_solved && !_failed,
-                  glowing: _solved),
+              Expanded(
+                child: BitRow(
+                    bits: _curXorC,
+                    onToggle: _toggleXorC,
+                    enabled: !_solved && !_failed,
+                    glowing: _solved),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -698,7 +700,9 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen>
             width: 20,
             child: Text(label, style: AppText.kicker(color: AppColors.g2))),
         const SizedBox(width: 8),
-        BitRow(bits: bits, onToggle: (_) {}, enabled: false),
+        Expanded(
+          child: BitRow(bits: bits, onToggle: (_) {}, enabled: false),
+        ),
       ],
     );
   }

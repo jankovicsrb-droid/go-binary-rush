@@ -229,7 +229,9 @@ class _XorScreenState extends State<XorScreen>
           child: Text(label, style: AppText.kicker(color: AppColors.g2)),
         ),
         const SizedBox(width: 8),
-        BitRow(bits: bits, onToggle: (_) {}, enabled: false),
+        Expanded(
+          child: BitRow(bits: bits, onToggle: (_) {}, enabled: false),
+        ),
       ],
     );
   }
@@ -258,11 +260,13 @@ class _XorScreenState extends State<XorScreen>
               child: Text('C', style: AppText.kicker(color: AppColors.g2)),
             ),
             const SizedBox(width: 8),
-            BitRow(
-              bits: _bitsC,
-              onToggle: _toggleC,
-              enabled: !_solved,
-              glowing: _solved,
+            Expanded(
+              child: BitRow(
+                bits: _bitsC,
+                onToggle: _toggleC,
+                enabled: !_solved,
+                glowing: _solved,
+              ),
             ),
           ],
         ),
