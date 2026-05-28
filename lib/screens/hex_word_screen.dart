@@ -243,9 +243,30 @@ class _HexWordScreenState extends State<HexWordScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
+        _tierCell(),
         _hudCell('SCORE', '${score.score}'),
         _hudCell('STREAK', '×${score.streak}'),
         _hudCell('BEST', '${score.highScore}'),
+      ],
+    );
+  }
+
+  Widget _tierCell() {
+    final int tierCount = _maxWordLen - _minWordLen + 1;
+    final int tier =
+        (_currentMaxLen - _minWordLen + 1).clamp(1, tierCount);
+    final int total = _prefs?.getInt('hex_word_total') ?? 0;
+    final String progress = tier >= tierCount
+        ? 'MAX'
+        : '${total % _wordsPerStep}/$_wordsPerStep';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text('TIER', style: AppText.kicker()),
+        const SizedBox(height: 2),
+        Text('T$tier', style: AppText.hudValue()),
+        Text(progress,
+            style: AppText.mono(size: 9, color: AppColors.g2)),
       ],
     );
   }
