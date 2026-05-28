@@ -48,16 +48,20 @@ if (-not (Test-Path -LiteralPath $pubspec)) {
 # and convert LF<->CRLF, which would dirty the diff).
 $raw = [System.IO.File]::ReadAllText($pubspec)
 
-$pattern = '(?m)^version:\s*(\d+)\.(\d+)\.(\d+)\+(\d+)\s*$'
+# Capture surrounding whitespace so we preserve the exact line ending
+# (LF on Unix, CRLF on Windows) when writing back.
+$pattern = '(?m)^(version:)([^\S\n]*)(\d+)\.(\d+)\.(\d+)\+(\d+)([^\S\n]*)$'
 $m = [regex]::Match($raw, $pattern)
 if (-not $m.Success) {
     throw "No 'version: X.Y.Z+B' line found in pubspec.yaml"
 }
 
-$major = [int]$m.Groups[1].Value
-$minor = [int]$m.Groups[2].Value
-$patch = [int]$m.Groups[3].Value
-$build = [int]$m.Groups[4].Value
+$leadWS  = $m.Groups[2].Value
+$major   = [int]$m.Groups[3].Value
+$minor   = [int]$m.Groups[4].Value
+$patch   = [int]$m.Groups[5].Value
+$build   = [int]$m.Groups[6].Value
+$trailWS = $m.Groups[7].Value
 
 $oldVersion = "$major.$minor.$patch+$build"
 
@@ -69,7 +73,7 @@ switch ($Part) {
 $build++
 
 $newVersion = "$major.$minor.$patch+$build"
-$newLine    = "version: $newVersion"
+$newSegment = "version:$leadWS$newVersion$trailWS"
 
 Write-Host ("pubspec version: {0} -> {1}" -f $oldVersion, $newVersion) -ForegroundColor Green
 
@@ -78,7 +82,7 @@ if ($DryRun) {
     exit 0
 }
 
-$newRaw = $raw.Substring(0, $m.Index) + $newLine + $raw.Substring($m.Index + $m.Length)
+$newRaw = $raw.Substring(0, $m.Index) + $newSegment + $raw.Substring($m.Index + $m.Length)
 [System.IO.File]::WriteAllText($pubspec, $newRaw)
 
 Write-Host "Updated $pubspec" -ForegroundColor Green
